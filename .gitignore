@@ -1,0 +1,8 @@
+*.pyc
+*.swp
+.data/
+*.hdf
+*.egg-info/
+*.iml
+.ipynb_checkpoints/
+

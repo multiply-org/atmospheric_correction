@@ -1,0 +1,21 @@
+about:
+  summary: "MULTIPLY forward operators package"
+  home: https://github.com/multiply-org/forward_operators
+
+package:
+  name: multiply_forward_operators
+  version: "0.1"
+
+source:
+  git_url: "https://github.com/multiply-org/forward_operators.git"
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
