@@ -1,1 +1,1 @@
-#Atmospheric correction for Semtinel 2.
+# Atmospheric correction for Sentinel 2.
