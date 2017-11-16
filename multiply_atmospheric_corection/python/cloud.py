@@ -1,6 +1,6 @@
 import numpy 
 from numpy import clip, where
-from scipy.ndimage.morphology import iterate_structure, generate_binary_structure, binary_dilation
+from scipy.ndimage.morphology import iterate_structure, generate_binary_structure, binary_erosion, binary_dilation
 class classification(object):
     def __init__(self, img = None):
         self.img = img
@@ -32,7 +32,7 @@ class classification(object):
         self.t13_min = 0.9
         self.t14_max = 6.
         self.t14_min = 3.
-        self.c_pt = 0.015
+        self.c_pt = 0.3
         self.b2 = img['B02']
         self.b4 = img['B04']
         self.b3 = img['B03']
@@ -224,9 +224,13 @@ class classification(object):
         for i in [self.p1p, self.p2p, self.p8p, self.p9p, self.p10p, self.p11p, self.p12p, self.p13p, self.p14p]:
             self.cp = self.Posb(i,self.cp)
         
-        c_ptm = self.cp > self.c_pt
-        self.fcm = self.cm & c_ptm
-        
+        c_ptm    = self.cp > self.c_pt
+        fcm      = self.cm & c_ptm
+        e_cmsk   = binary_erosion(fcm, structure=numpy.ones((3,3)), iterations=10)
+        d_cmsk   = binary_dilation(e_cmsk, structure=numpy.ones((3,3)), iterations=50)
+        self.fcm = d_cmsk 
+
+
         v = [self.p8m, self.p9m, self.p10m, self.p11m, self.p12m, self.p13m, self.p14m, 
                   self.p8p, self.p9p, self.p10p, self.p11p, self.p12p, self.p13p, self.p14p]
         for i in v:

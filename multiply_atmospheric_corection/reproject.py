@@ -29,7 +29,7 @@ class reproject_data(object):
         self.ymax       = ymax
         self.xRes       = xRes
         self.yRes       = yRes
-    def get_it(self,):
+    #def get_it(self,):
         if (self.target_img is None) & (self.dstSRS is None):
             raise IOError, 'Projection should be specified ether from a file or a projection code.'
         elif self.target_img is not None:
@@ -51,13 +51,14 @@ class reproject_data(object):
             self.g = gdal.Warp('', self.source_img, format = 'MEM', outputBounds = \
                                [self.xmin, self.ymin, self.xmax, self.ymax], xRes = \
                                 self.xRes, yRes = self.yRes, dstSRS = self.dstSRS, copyMetadata=True)
-        if self.g.RasterCount < 3:
+        if self.g.RasterCount <= 3:
             self.data = self.g.ReadAsArray()
+            #return self.data
         elif self.verbose:
             print 'There are %d bands in this file, use g.GetRasterBand(<band>) to avoid reading the whole file.'%self.g.RasterCount
 
 if __name__=='__main__':
     ele = reproject_data('/home/ucfafyi/DATA/S2_MODIS/SRTM/global_dem.vrt','/home/ucfafyi/DATA/S2_MODIS/s_data/29/S/QB/2016/12/23/0/B04.jp2') 
-    ele.get_it()
+    #ele.get_it()
     mask = (ele.data == -32768) | (~np.isfinite(ele.data))
     ele.data = ma.array(ele.data, mask = mask)

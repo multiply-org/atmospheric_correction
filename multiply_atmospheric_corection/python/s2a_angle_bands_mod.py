@@ -854,7 +854,7 @@ def loop(tparms, AngleObs, gsd, subsamp, BandFoot, Orbit,  XML_File, sul_lat,sul
     #tmphdr = Tile_Base[0][:-4] + '_Sat_' + bandName + '.hdr'
     os.remove(tmphdr)
     Hdr_File = WriteHeader( Out_File, out_rows, out_cols, AngleObs['ul_x'], AngleObs['ul_y'], gsd[band]*subsamp, AngleObs['zone'], AngleObs['hemis'] )
-    print 'Created image file %s and header file %s.' % (Out_File, Hdr_File)
+    #print 'Created image file %s and header file %s.' % (Out_File, Hdr_File)
     #sys.exit(0)
 from functools import partial 
 par = partial(loop, AngleObs=AngleObs, gsd=gsd, subsamp = subsamp, BandFoot=BandFoot, Orbit = Orbit,\

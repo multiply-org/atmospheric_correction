@@ -24,7 +24,6 @@ class solving_atmo_paras(object):
                        atmosphere = None, 
                        subsample  = None,
                        subsample_start = 0,
-                       gradient_refl=True, 
                        bands=None):
         
         self.alpha         = -1.42 #angstrom exponent for continental type aerosols
@@ -45,7 +44,7 @@ class solving_atmo_paras(object):
         if subsample is None:
             self.subsample = 1
         else:
-           self.subsample  = subsample
+            self.subsample  = subsample
         self.subsample_sta = subsample_start
     
     def _load_emus(self):
@@ -163,7 +162,7 @@ class solving_atmo_paras(object):
         flat_mask, flat_boa, flat_toa, flat_boa_unc, flat_atmos, [sza, vza, saa, vaa, elevation] = self._sort_emus_inputs()
         for i in [flat_mask, flat_boa, flat_toa, flat_boa_unc, flat_atmos, sza, vza, saa, vaa, elevation]:
             if np.array(i).size == 0:
-                return 0., np.array([0.,0.,0.]) # any empty array result in earlier leaving the estimation
+                return 0., np.array(self.flat_prior) # any empty array result in earlier leaving the estimation
         H0, dH = self.AEE.emulator_reflectance_atmosphere(flat_boa, flat_atmos, sza, vza, saa, vaa, elevation, bands=self.band_indexs)
         H0, dH = np.array(H0), np.array(dH)
         diff = (H0 - flat_toa) # order is important!
@@ -213,10 +212,13 @@ class solving_atmo_paras(object):
         An optimization function used for the retrieval of atmospheric parameters
         '''        
         p0     = self.prior 
-        psolve1 = optimize.fmin_l_bfgs_b(self.fmin_l_bfgs_cost, p0, approx_grad=0, iprint=-1, \
-                                         pgtol=1e-6,factr=1000, bounds=self.bounds,fprime=None)
+        #for _aod in np.arange(max(p0[0]-self.aot_unc, 0), min(p0[0]+self.aot_unc, 2), 0.1):
+        #    p          = (_aod,) + self.prior[1:]   
+        #    self.prior = p
+        psolve = optimize.fmin_l_bfgs_b(self.fmin_l_bfgs_cost, p0, approx_grad=0, iprint = 100, \
+                                        pgtol=1e-6,factr=1000, bounds=self.bounds,fprime=None)
         #psolve2 = optimize.fmin(self.fmin_cost, p0, full_output=True, maxiter=100, maxfun=150, disp=0)
-        return psolve1#, psolve2
+        return psolve#, psolve2
  
     def fmin_l_bfgs_cost(self,p):
 

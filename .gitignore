@@ -1,6 +1,12 @@
 *.pyc
+*.tif
+*.nc
+*.hdf
+*.pkl
+*.out
+*.temp
+*.ipynb
 *.swp
-.data/
 *.hdf
 *.egg-info/
 *.iml

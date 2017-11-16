@@ -154,7 +154,7 @@ def Find_corresponding_pixels(H_res_fname, destination_res=500):
 
     g = gdal.Open(H_res_fname)
     geo_t = g.GetGeoTransform()
-    x_size, y_size = g.RasterXSize, g.RasterYSize
+    x_size, y_size = g.RasterYSize, g.RasterXSize
 
     wgs84 = osr.SpatialReference( ) # Define a SpatialReference object
     wgs84.ImportFromEPSG( 4326 ) # And set it to WGS84 using the EPSG code
@@ -203,7 +203,7 @@ def Find_corresponding_pixels(H_res_fname, destination_res=500):
     
     inds = {}
     for i in tiles:
-        latitudes, longtitudes = get_Mpix_wgs(h,v, pix_num).T[[1,0],]
+        latitudes, longtitudes = get_Mpix_wgs(i[1],i[2], pix_num).T[[1,0],]
         cors = bilineanr([latitudes, longtitudes], s_dic, s_corners)
         hinds =np.array([cors[0][(cors[0]>=0)&(cors[0]<x_size)&(cors[1]>=0)&(cors[1]<y_size)],
                      cors[1][(cors[0]>=0)&(cors[0]<x_size)&(cors[1]>=0)&(cors[1]<y_size)]]).astype(int)

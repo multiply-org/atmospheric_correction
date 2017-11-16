@@ -16,11 +16,19 @@ def r_modis(fname, slic=None):
         if slic==None:
             return g.ReadAsArray()
         elif g.RasterCount==1: 
-            Lx,Ly = slic
-            return g.ReadAsArray()[Lx,Ly]
+            Lx,Ly        = np.array(slic)
+            xoff,  yoff  = min(Ly), min(Lx)
+            xsize, ysize = (max(Ly) - xoff + 1), (max(Lx) - yoff + 1)
+            return g.ReadAsArray(xoff, yoff, xsize, ysize)[Lx-yoff, Ly-xoff]
         elif g.RasterCount>1:
-            Lx,Ly = slic
-            return g.ReadAsArray()[:, Lx, Ly]
+            Lx,Ly = np.array(slic)
+            xoff,  yoff  = min(Ly), min(Lx)
+            xsize, ysize = (max(Ly) - xoff + 1), (max(Lx) - yoff + 1)
+            rets = []
+            for band in range(g.RasterCount):
+                band += 1
+                rets.append(g.GetRasterBand(band).ReadAsArray(xoff, yoff, xsize, ysize)[Lx-yoff, Ly-xoff])
+            return np.array(rets)    
         else:
             raise IOError
 

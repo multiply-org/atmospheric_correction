@@ -8,7 +8,10 @@ import numpy as np
 from multiprocessing import Pool
 from glob import glob
 from cloud import classification
+from scipy.interpolate import griddata
 import subprocess
+from reproject import reproject_data
+from multi_process import parmap
 import copy
 
 def read_s2_band(fname):
@@ -94,7 +97,7 @@ class read_s2(object):
             cl = classification(img = img)
             cl.Get_cm_p()
             g=None; g1=None
-            self.cloud = cl.cm
+            self.cloud = cl.fcm
             g = gdal.Open(self.s2_file_dir+'/B04.jp2')
             driver = gdal.GetDriverByName('GTiff')
             g1 = driver.Create(self.s2_file_dir+'/cloud.tiff', \
@@ -115,7 +118,7 @@ class read_s2(object):
                                            '/cloud.tiff').ReadAsArray().astype(bool)
         self.cloud_cover = 1.*self.cloud.sum()/self.cloud.size
 
-    def get_s2_angles(self,reconstruct = True, slic = None):
+    def get_s2_angles(self, reconstruct = True, slic = None):
 
 
 	tree = ET.parse(self.s2_file_dir+'/metadata.xml')
@@ -170,7 +173,18 @@ class read_s2(object):
 		    for i in mvia.findall('Mean_Viewing_Incidence_Angle'):
 			mvz[int(i.attrib['bandId'])] = float(i.find('ZENITH_ANGLE').text)
 			mva[int(i.attrib['bandId'])] = float(i.find('AZIMUTH_ANGLE').text)
-	self.saa, self.sza = np.array(saa).astype(float), np.array(sza).astype(float)
+        sza  = np.array(sza).astype(float)
+        saa  = np.array(saa).astype(float)
+        mask = np.isnan(sza)
+        sza  = griddata(np.array(np.where(~mask)).T, sza[~mask], \
+                       (np.repeat(range(23), 23).reshape(23,23), \
+                        np.tile  (range(23), 23).reshape(23,23)), method='nearest')
+        mask = np.isnan(saa) 
+        saa  = griddata(np.array(np.where(~mask)).T, saa[~mask], \
+                       (np.repeat(range(23), 23).reshape(23,23), \
+                        np.tile  (range(23), 23).reshape(23,23)), method='nearest') 
+
+	self.saa, self.sza = np.array(saa), np.array(sza)
 	dete_id = np.unique([i[1] for i in vaa.keys()])
 	band_id = range(13)
 	bands_vaa = []
@@ -203,10 +217,18 @@ class read_s2(object):
 	self.vza = {}; self.vaa = {}
 	self.mvz = {}; self.mva = {}
 	for band in bands:
-	    self.vza[band] = vza[band]
-	    self.vaa[band] = vaa[band]
-	    self.mvz[band] = mvz_[band]
-	    self.mva[band] = mva_[band]
+            mask  = np.isnan(vza[band])
+            g_vza = griddata(np.array(np.where(~mask)).T, vza[band][~mask], \
+                            (np.repeat(range(23), 23).reshape(23,23), \
+                             np.tile  (range(23), 23).reshape(23,23)), method='nearest')
+            mask  = np.isnan(vaa[band])              
+            g_vaa = griddata(np.array(np.where(~mask)).T, vaa[band][~mask], \
+                            (np.repeat(range(23), 23).reshape(23,23), \
+                             np.tile  (range(23), 23).reshape(23,23)), method='nearest') 
+	    self.vza[band]  = g_vza
+	    self.vaa[band]  = g_vaa
+	    self.mvz[band]  = mvz_[band]
+	    self.mva[band]  = mva_[band]
 	self.angles = {'sza':self.sza, 'saa':self.saa, 'msz':self.msz, 'msa':self.msa,\
                        'vza':self.vza, 'vaa': self.vaa, 'mvz':self.mvz, 'mva':self.mva}
 
@@ -214,9 +236,9 @@ class read_s2(object):
             if len(glob(self.s2_file_dir + '/angles/VAA_VZA_*.img')) == 13:
                 pass
             else:
-                print 'Reconstructing Sentinel 2 angles...'
+                #print 'Reconstructing Sentinel 2 angles...'
                 subprocess.call(['python', './python/s2a_angle_bands_mod.py', \
-                                  self.s2_file_dir+'/metadata.xml',  '1'])
+                                  self.s2_file_dir+'/metadata.xml',  '10'])
 
 	    if self.bands is None:
 		bands = self.s2_bands
@@ -225,44 +247,20 @@ class read_s2(object):
 
             self.vaa = {}; self.vza = {}
             fname = [self.s2_file_dir+'/angles/VAA_VZA_%s.img'%band for band in bands]
-            pool = Pool(processes=len(fname))
-            ret = pool.map(read_s2_band, fname)
+            f = lambda fn: reproject_data(fn, self.s2_file_dir+'/B04.jp2').data
+            ret = parmap(f, fname)
             for i,angs in enumerate(ret):
+                angs[0][angs[0]<0] = 360 + angs[0][angs[0]<0]
+                angs = angs.astype(float)/100.
                 if slic is None:
                     self.vaa[bands[i]] = angs[0]
                     self.vza[bands[i]] = angs[1]
                 else:
-                    resolution_ratio = angs[0].shape[0]/10980
-                    x_ind, y_ind = (np.array(slic)*resolution_ratio).astype(int)
+                    x_ind, y_ind = np.array(slic)
                     self.vaa[bands[i]] = angs[0][x_ind, y_ind]
                     self.vza[bands[i]] = angs[1][x_ind, y_ind]
-            '''
-	    for band in bands:
-		g = gdal.Open(self.s2_file_dir + '/angles/VAA_VZA_%s.img'%band)
-                VAA, VZA = g.GetRasterBand(1).ReadAsArray(), g.GetRasterBand(2).ReadAsArray()
-                if slic is None:
-                    self.vaa[band] = VAA 
-                    self.vza[band] = VZA
-                else:
-                    resolution_ratio = VAA.shape[0]/10980
-                    x_ind, y_ind = (np.array(slic)*resolution_ratio).astype(int)
-                    self.vaa[band] = VAA[x_ind, y_ind]
-                    self.vza[band] = VZA[x_ind, y_ind]
-            '''  
             self.angles = {'sza':self.sza, 'saa':self.saa, 'msz':self.msz, 'msa':self.msa,\
                            'vza':self.vza, 'vaa': self.vaa, 'mvz':self.mvz, 'mva':self.mva}
-
-    def get_wv(self,):
-	fname   = [self.s2_file_dir+'/%s.jp2'%i for i in ['B8A', 'B09']]
-	pool    = Pool(processes=len(fname))
-	b8a, b9 = pool.map(read_s2_band, fname)
-
-        b9  = np.repeat(np.repeat(b9, 3, axis=0), 3, axis=1) # repeat image to match the b8a
-        SOLAR_SPECTRAL_IRRADIANCE_B_8A = 955.19
-        SOLAR_SPECTRAL_IRRADIANCE_B_09 = 813.04	
-        #the same sun earth distance correction factors cancled out
-        CIBR = SOLAR_SPECTRAL_IRRADIANCE_B_8A/SOLAR_SPECTRAL_IRRADIANCE_B_09 * b8a/b9 
-        return CIBR
 
 if __name__ == '__main__':
     

@@ -28,7 +28,7 @@ class psf_optimize(object):
        self.off         = 0.0086119174434039214
     def _preprocess(self,):
      
-        size = 2*int(round(max(1.96*50, 1.96*50)))# set the largest possible PSF size
+        size = 2*int(round(1.96*39))# set the largest possible PSF size
         self.high_img[0,:]=self.high_img[-1,:]=self.high_img[:,0]=self.high_img[:,-1]= -9999
         self.bad_pixs = cloud_dilation( (self.high_img <= 0) | self.cloud  | (self.high_img >= 1), iteration=size/2)
 
