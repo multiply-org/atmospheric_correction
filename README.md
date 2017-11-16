@@ -1,6 +1,6 @@
 # Sentinel 2 Atmospheric correction 
 ### Feng Yin
-### Deparment of Geography, UCL
+### Department of Geography, UCL
 ### ucfafyi@ucl.ac.uk
 
 This atmospheric correction method uses MODIS MCD43 BRDF product to get a coarse resolution simulation of earth surface. A model based on MODIS PSF is built to deal with the scale differences between MODIS and Sentinel 2. We uses the ECMWF CAMS prediction as a prior for the atmospheric states, coupling with 6S model to solve for the atmospheric parameters. We do not have a proper cloud mask at the moment and no topography correction as well. Homogeneouse surface is used without considering the BRDF effects.
