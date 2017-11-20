@@ -77,7 +77,7 @@ class atmospheric_correction(object):
         self.sza,self.saa = all_angs['sza'], all_angs['saa']
         
         self.logger.info('Doing 10 meter bands')
-        self._10meter_ref = np.array([all_refs[band]/10000. for band \
+        self._10meter_ref = np.array([all_refs[band].astype(float)/10000. for band \
                                       in ['B02', 'B03', 'B04', 'B08']])
         if self.reconstruct_s2_angle:
             self._10meter_vza = np.array([all_angs['vza'][band]/100. for band
@@ -124,14 +124,14 @@ class atmospheric_correction(object):
         self._save_img(self.boa, ['B02', 'B03', 'B04', 'B08']); del self.boa 
 	  
         self.logger.info('Doing 20 meter bands')
-        self._20meter_ref = np.array([all_refs[band]/10000. for band \
+        self._20meter_ref = np.array([all_refs[band].astype(float)/10000. for band \
                                       in ['B05', 'B06', 'B07', 'B8A', 'B11', 'B12']])
 
         if self.reconstruct_s2_angle:
-            self._20meter_vza = np.array([all_angs['vza'][band]/100. for band \
-                                          in ['B05', 'B06', 'B07', 'B8A', 'B11', 'B12']])
-            self._20meter_vaa = np.array([all_angs['vaa'][band]/100. for band \
-                                          in ['B05', 'B06', 'B07', 'B8A', 'B11', 'B12']])
+            self._20meter_vza = np.array([all_angs['vza'][band] for band \
+                                          in ['B05', 'B06', 'B07', 'B8A', 'B11', 'B12']]).reshape(6, 5490, 2, 5490, 2).mean(axis=(4,2))
+            self._20meter_vaa = np.array([all_angs['vaa'][band] for band \
+                                          in ['B05', 'B06', 'B07', 'B8A', 'B11', 'B12']]).reshape(6, 5490, 2, 5490, 2).mean(axis=(4,2))
         else:
             self._20meter_vza = np.array([np.repeat(np.repeat(all_angs['vza'][band], \
                                           int(np.ceil(5490/23.)), axis=0), int(np.ceil(5490/23.)), \
@@ -175,13 +175,13 @@ class atmospheric_correction(object):
 
 
         self.logger.info('Doing 60 meter bands')
-        self._60meter_ref = np.array([all_refs[band]/10000. for band \
+        self._60meter_ref = np.array([all_refs[band].astype(float)/10000. for band \
                                       in ['B01', 'B09', 'B10']])
         if self.reconstruct_s2_angle:
-            self._60meter_vza = np.array([all_angs['vza'][band]/100. for band \
-                                          in ['B01', 'B09', 'B10']])
-            self._60meter_vaa = np.array([all_angs['vaa'][band]/100. for band \
-                                          in ['B01', 'B09', 'B10']])
+            self._60meter_vza = np.array([all_angs['vza'][band] for band \
+                                          in ['B01', 'B09', 'B10']]).reshape(3, 1830, 6, 1830, 6).mean(axis=(4,2))
+            self._60meter_vaa = np.array([all_angs['vaa'][band] for band \
+                                          in ['B01', 'B09', 'B10']]).reshape(3, 1830, 6, 1830, 6).mean(axis=(4,2))
         else:
             self._60meter_vza = np.array([np.repeat(np.repeat(all_angs['vza'][band], int(np.ceil(1830/23.)), \
                                           axis=0), int(np.ceil(1830/23.)), axis=1)[:1830, :1830] \
@@ -288,6 +288,7 @@ class atmospheric_correction(object):
         rows              = np.repeat(np.arange(self._num_blocks), self._num_blocks)
         columns           = np.tile(np.arange(self._num_blocks), self._num_blocks)
         blocks            = zip(rows, columns)
+        #self._s2_block_correction_emus_xa_xb_xc([0, 0])
         ret = parmap(self._s2_block_correction_emus_xa_xb_xc, blocks)
         #ret = parmap(self._s2_block_correction_6s, blocks)
         #ret               = parmap(self._s2_block_correction_emus, blocks) 
@@ -342,7 +343,7 @@ class atmospheric_correction(object):
                                                                       self._block_size//self._mean_size)
             b = self.xbp_emus[band].predict(np.array(p).T)[0].reshape(self._block_size//self._mean_size, \
                                                                       self._block_size//self._mean_size)
-            c = self.xbp_emus[band].predict(np.array(p).T)[0].reshape(self._block_size//self._mean_size, \
+            c = self.xcp_emus[band].predict(np.array(p).T)[0].reshape(self._block_size//self._mean_size, \
                                                                       self._block_size//self._mean_size)
             a = np.repeat(np.repeat(a, self._mean_size, axis=0), self._mean_size, axis=1)
             b = np.repeat(np.repeat(b, self._mean_size, axis=0), self._mean_size, axis=1)
@@ -386,7 +387,7 @@ class atmospheric_correction(object):
             #     tcwv.ravel(), tco3.ravel(), elevation.ravel()]
             a = self.xap_emus[band].predict(np.array([p,]))[0]
             b = self.xbp_emus[band].predict(np.array([p,]))[0]
-            c = self.xbp_emus[band].predict(np.array([p,]))[0]
+            c = self.xcp_emus[band].predict(np.array([p,]))[0]
             y     = a * toa[bi] -b
             corf  = y / (1 + c*y)
             corfs.append(corf)

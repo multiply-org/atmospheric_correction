@@ -259,7 +259,7 @@ if __name__ == '__main__':
     full_res = (10980, 10980) 
     aero_res = 3050
     emus_dir = '/home/ucfafyi/DATA/Multiply/emus/'
-    sensor   = 'MSI'
+    sensor   = 'msi'
     xap_emu  = glob(emus_dir + '/isotropic_%s_emulators_*_xap.pkl'%(sensor))[0]     
     xbp_emu  = glob(emus_dir + '/isotropic_%s_emulators_*_xbp.pkl'%(sensor))[0]
     xcp_emu  = glob(emus_dir + '/isotropic_%s_emulators_*_xcp.pkl'%(sensor))[0]

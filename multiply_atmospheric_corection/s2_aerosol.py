@@ -394,7 +394,7 @@ class solve_aerosol(object):
         aod_map, tcwv_map, tco3_map    = np.where(~np.isnan(aod_map),  aod_map,  np.nanmean(aod_map)), \
                                          np.where(~np.isnan(tcwv_map), tcwv_map, np.nanmean(tcwv_map)), \
                                          np.where(~np.isnan(tco3_map), tco3_map, np.nanmean(tco3_map))
-        para_names = 'aod550', 'tcwv', 'tco3'
+        para_names = 'aot', 'tcwv', 'tco3'
          
         g = gdal.Open(self.s2.s2_file_dir+'/B04.jp2')
         xmin, ymax = g.GetGeoTransform()[0], g.GetGeoTransform()[3]

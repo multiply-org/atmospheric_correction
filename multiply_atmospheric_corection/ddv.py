@@ -130,7 +130,7 @@ class ddv(object):
         y        = red_xap * self.red[self._ndvi_mask] - red_xbp
         red_sur  = y / (1 + red_xcp * y)
         blue_dif = (blue_sur - 0.25 * self.swif[self._ndvi_mask])**2
-        red_dif  = (blue_sur - 0.5  * self.swif[self._ndvi_mask])**2
+        red_dif  = (red_sur  - 0.5  * self.swif[self._ndvi_mask])**2
         cost     = 0.5 * (blue_dif + red_dif)
         return cost
          
