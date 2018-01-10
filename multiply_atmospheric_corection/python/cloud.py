@@ -187,35 +187,35 @@ class classification(object):
         return self.p14p,self.p14m
 
     def Get_cm_p(self):
-        print 'Image classfication...'
+        # print 'Image classfication...'
         self._p1()
-        print "{0:.0f}%".format(1./14 * 100)
+        # print "{0:.0f}%".format(1./14 * 100)
         self._p2()
-        print "{0:.0f}%".format(2./14 * 100)
+        # print "{0:.0f}%".format(2./14 * 100)
         self._p3()
-        print "{0:.0f}%".format(3./14 * 100)
+        # print "{0:.0f}%".format(3./14 * 100)
         self._p4()
-        print "{0:.0f}%".format(4./14 * 100)
+        # print "{0:.0f}%".format(4./14 * 100)
         self._p5()
-        print "{0:.0f}%".format(5./14 * 100)
+        # print "{0:.0f}%".format(5./14 * 100)
         self._p6()
-        print "{0:.0f}%".format(6./14 * 100)
+        # print "{0:.0f}%".format(6./14 * 100)
         self._p7()
-        print "{0:.0f}%".format(7./14 * 100)
+        # print "{0:.0f}%".format(7./14 * 100)
         self._p8()
-        print "{0:.0f}%".format(8./14 * 100)
+        # print "{0:.0f}%".format(8./14 * 100)
         self._p9()
-        print "{0:.0f}%".format(9./14 * 100)
+        # print "{0:.0f}%".format(9./14 * 100)
         self._p10()
-        print "{0:.0f}%".format(10./14 * 100)
+        # print "{0:.0f}%".format(10./14 * 100)
         self._p11()
-        print "{0:.0f}%".format(11./14 * 100)
+        # print "{0:.0f}%".format(11./14 * 100)
         self._p12()
-        print "{0:.0f}%".format(12./14 * 100)
+        # print "{0:.0f}%".format(12./14 * 100)
         self._p13()
-        print "{0:.0f}%".format(13./14 * 100)
+        # print "{0:.0f}%".format(13./14 * 100)
         self._p14()
-        print "{0:.0f}%".format(14./14 * 100-1.111)
+        # print "{0:.0f}%".format(14./14 * 100-1.111)
         
         self.cm = True
         for i in [self.p1m,self.p2m,~self.sm,self.p8m, self.p9m, self.p10m, self.p11m, self.p12m, self.p13m, self.p14m]:
@@ -235,4 +235,4 @@ class classification(object):
                   self.p8p, self.p9p, self.p10p, self.p11p, self.p12p, self.p13p, self.p14p]
         for i in v:
             del i
-        print 'Done!!!'
+        # print 'Done!!!'

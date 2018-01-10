@@ -15,9 +15,12 @@ class reproject_data(object):
                  target_img   = None,
                  dstSRS       = None,
                  verbose      = False,
-                 (xmin, xmax) = (None, None),
-                 (ymin, ymax) = (None, None),
-                 (xRes, yRes) = (None, None)):
+                 xmin = None,
+                 xmax = None,
+                 ymin = None,
+                 ymax = None,
+                 xRes = 0,
+                 yRes = 0):
 
         self.source_img = source_img
         self.target_img = target_img
@@ -31,7 +34,7 @@ class reproject_data(object):
         self.yRes       = yRes
     #def get_it(self,):
         if (self.target_img is None) & (self.dstSRS is None):
-            raise IOError, 'Projection should be specified ether from a file or a projection code.'
+            raise IOError('Projection should be specified ether from a file or a projection code.')
         elif self.target_img is not None:
             g     = gdal.Open(self.target_img)
             geo_t = g.GetGeoTransform()
@@ -41,7 +44,7 @@ class reproject_data(object):
             ymin, ymax = min(geo_t[3], geo_t[3] + y_size * geo_t[5]), \
                          max(geo_t[3], geo_t[3] + y_size * geo_t[5])
             xRes, yRes = abs(geo_t[1]), abs(geo_t[5])
-            dstSRS     = osr.SpatialReference( )
+            dstSRS     = osr.SpatialReference()
             raster_wkt = g.GetProjection()
             dstSRS.ImportFromWkt(raster_wkt)
             self.g = gdal.Warp('', self.source_img, format = 'MEM', outputBounds = \
@@ -55,7 +58,7 @@ class reproject_data(object):
             self.data = self.g.ReadAsArray()
             #return self.data
         elif self.verbose:
-            print 'There are %d bands in this file, use g.GetRasterBand(<band>) to avoid reading the whole file.'%self.g.RasterCount
+            print('There are %d bands in this file, use g.GetRasterBand(<band>) to avoid reading the whole file.'%self.g.RasterCount)
 
 if __name__=='__main__':
     ele = reproject_data('/home/ucfafyi/DATA/S2_MODIS/SRTM/global_dem.vrt','/home/ucfafyi/DATA/S2_MODIS/s_data/29/S/QB/2016/12/23/0/B04.jp2') 

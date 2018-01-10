@@ -7,7 +7,9 @@ from numpy import clip, uint8
 from glob import glob
 import logging
 from Py6S import *
-import cPickle as pkl
+# import _pickle as pkl
+# import cPickle as pkl
+import dill as pkl
 from multi_process import parmap
 from grab_s2_toa import read_s2
 #from aerosol_solver import solve_aerosol
@@ -39,18 +41,18 @@ class atmospheric_correction(object):
         self.emus_dir    = emus_dir
         self.sur_refs     = {}
         self.reconstruct_s2_angle = reconstruct_s2_angle
-	self.logger = logging.getLogger('Sentinel 2 Atmospheric Correction')
-	self.logger.setLevel(logging.INFO)
-        if not self.logger.handlers:       
-	    ch = logging.StreamHandler()
-	    ch.setLevel(logging.DEBUG)
-	    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-	    ch.setFormatter(formatter)
-	    self.logger.addHandler(ch)
+        self.logger = logging.getLogger('Sentinel 2 Atmospheric Correction')
+        self.logger.setLevel(logging.INFO)
+        if not self.logger.handlers:
+            ch = logging.StreamHandler()
+            ch.setLevel(logging.DEBUG)
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            ch.setFormatter(formatter)
+            self.logger.addHandler(ch)
 
 
     def _load_inverse_emus(self, sensor):
-	AEE = AtmosphericEmulationEngine(sensor, self.emus_dir)
+        AEE = AtmosphericEmulationEngine(sensor, self.emus_dir)
         return AEE
 
     def _load_xa_xb_xc_emus(self,):
@@ -120,7 +122,7 @@ class atmospheric_correction(object):
         del self._10meter_ref; del self._10meter_vza; del self._10meter_vaa;  del self._10meter_sza 
         del self._10meter_saa; del self._10meter_aod; del self._10meter_tcwv; del self._10meter_tco3; del self._10meter_ele
         
-	self.sur_refs.update(dict(zip(['B02', 'B03', 'B04', 'B08'], self.boa)))
+        self.sur_refs.update(dict(zip(['B02', 'B03', 'B04', 'B08'], self.boa)))
         self._save_img(self.boa, ['B02', 'B03', 'B04', 'B08']); del self.boa 
 	  
         self.logger.info('Doing 20 meter bands')
@@ -258,18 +260,14 @@ class atmospheric_correction(object):
 
     def get_control_variables(self, target_band):
 
-	aod = reproject_data(self.s2.s2_file_dir+'/aot.tif', \
-                             self.s2.s2_file_dir+'/%s.jp2'%target_band).data
+        aod = reproject_data(self.s2.s2_file_dir+'/aot.tif', self.s2.s2_file_dir+'/%s.jp2'%target_band).data
 
-        tcwv = reproject_data(self.s2.s2_file_dir+'/tcwv.tif', \
-                              self.s2.s2_file_dir+'/%s.jp2'%target_band).data
+        tcwv = reproject_data(self.s2.s2_file_dir+'/tcwv.tif', self.s2.s2_file_dir+'/%s.jp2'%target_band).data
 
-        tco3 = reproject_data(self.s2.s2_file_dir+'/tco3.tif', \
-                              self.s2.s2_file_dir+'/%s.jp2'%target_band).data
+        tco3 = reproject_data(self.s2.s2_file_dir+'/tco3.tif', self.s2.s2_file_dir+'/%s.jp2'%target_band).data
         ele = reproject_data(self.global_dem, self.s2.s2_file_dir+'/%s.jp2'%target_band).data
         mask = ~np.isfinite(ele)
-        ele[mask] = np.interp(np.flatnonzero(mask), \
-                              np.flatnonzero(~mask), ele[~mask]) # simple interpolation
+        ele[mask] = np.interp(np.flatnonzero(mask), np.flatnonzero(~mask), ele[~mask]) # simple interpolation
 
         return aod, tcwv, tco3, ele
 
@@ -300,24 +298,24 @@ class atmospheric_correction(object):
         del self._vaa; del self._aod; del self._tcwv; del self._tco3; del self._elevation
 
     def atm(self, p, RSR=None):
-	aod, tcwv, tco3, sza, vza, raa , elevation = p
-	path = '/home/ucfafyi/DATA/Multiply/6S/6SV2.1/sixsV2.1'
-	s = SixS(path)
-	s.altitudes.set_target_custom_altitude(elevation)
-	s.altitudes.set_sensor_satellite_level()
-	s.ground_reflectance = GroundReflectance.HomogeneousLambertian(GroundReflectance.GreenVegetation)
-	s.geometry           = Geometry.User()
-	s.geometry.solar_a   = 0
-	s.geometry.solar_z   = sza
-	s.geometry.view_a    = raa
-	s.geometry.view_z    = vza
-	s.aero_profile       = AeroProfile.PredefinedType(AeroProfile.Continental)
-	s.aot550             = aod
-	s.atmos_profile      = AtmosProfile.UserWaterAndOzone(tcwv, tco3)
-	s.wavelength         = Wavelength(RSR)
-	s.atmos_corr         = AtmosCorr.AtmosCorrLambertianFromReflectance(0.2)
-	s.run()
-	return s.outputs.coef_xap, s.outputs.coef_xbp, s.outputs.coef_xcp
+        aod, tcwv, tco3, sza, vza, raa , elevation = p
+        path = '/home/ucfafyi/DATA/Multiply/6S/6SV2.1/sixsV2.1'
+        s = SixS(path)
+        s.altitudes.set_target_custom_altitude(elevation)
+        s.altitudes.set_sensor_satellite_level()
+        s.ground_reflectance = GroundReflectance.HomogeneousLambertian(GroundReflectance.GreenVegetation)
+        s.geometry           = Geometry.User()
+        s.geometry.solar_a   = 0
+        s.geometry.solar_z   = sza
+        s.geometry.view_a    = raa
+        s.geometry.view_z    = vza
+        s.aero_profile       = AeroProfile.PredefinedType(AeroProfile.Continental)
+        s.aot550             = aod
+        s.atmos_profile      = AtmosProfile.UserWaterAndOzone(tcwv, tco3)
+        s.wavelength         = Wavelength(RSR)
+        s.atmos_corr         = AtmosCorr.AtmosCorrLambertianFromReflectance(0.2)
+        s.run()
+        return s.outputs.coef_xap, s.outputs.coef_xbp, s.outputs.coef_xcp
 
     def _s2_block_correction_emus_xa_xb_xc(self, block):
         i, j      = block

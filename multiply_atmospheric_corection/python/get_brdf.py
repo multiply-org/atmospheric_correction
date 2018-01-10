@@ -17,13 +17,13 @@ def r_modis(fname, slic=None):
             return g.ReadAsArray()
         elif g.RasterCount==1: 
             Lx,Ly        = np.array(slic)
-            xoff,  yoff  = min(Ly), min(Lx)
-            xsize, ysize = (max(Ly) - xoff + 1), (max(Lx) - yoff + 1)
+            xoff,  yoff  = int(min(Ly)), int(min(Lx))
+            xsize, ysize = int(max(Ly) - xoff + 1), int(max(Lx) - yoff + 1)
             return g.ReadAsArray(xoff, yoff, xsize, ysize)[Lx-yoff, Ly-xoff]
         elif g.RasterCount>1:
             Lx,Ly = np.array(slic)
-            xoff,  yoff  = min(Ly), min(Lx)
-            xsize, ysize = (max(Ly) - xoff + 1), (max(Lx) - yoff + 1)
+            xoff,  yoff  = int(min(Ly)), int(min(Lx))
+            xsize, ysize = int(max(Ly) - xoff + 1), int(max(Lx) - yoff + 1)
             rets = []
             for band in range(g.RasterCount):
                 band += 1
@@ -84,14 +84,14 @@ def get_brdf_six(fname, angles, bands = (7,), Linds = None, do_unc = True):
         brdf = br[:,0] + br[:,1]*k_vol + br[:,2]*k_geo
     if do_unc:
         doy   = fname.split('.')[-5]
-	date  = datetime.strptime(doy, 'A%Y%j')
-	day_before = [(date - timedelta(days = i)).strftime('A%Y%j') for i in range(1,4)]
-	day_after  = [(date + timedelta(days = i)).strftime('A%Y%j') for i in range(1,4)]
-	finder = fname.split('MCD43A1')[0] + 'MCD43A1.%s.' + fname.split('.')[-4] +'.006.*hdf'
-	before_f = sorted([glob(finder%i)[0] for i in day_before])
-	after_f =  sorted([glob(finder%i)[0] for i in day_after])
+        date  = datetime.strptime(doy, 'A%Y%j')
+        day_before = [(date - timedelta(days = i)).strftime('A%Y%j') for i in range(1,4)]
+        day_after  = [(date + timedelta(days = i)).strftime('A%Y%j') for i in range(1,4)]
+        finder = fname.split('MCD43A1')[0] + 'MCD43A1.%s.' + fname.split('.')[-4] +'.006.*hdf'
+        before_f = sorted([glob(finder%i)[0] for i in day_before])
+        after_f =  sorted([glob(finder%i)[0] for i in day_after])
         fnames = [temp1%(beforef, band) for beforef in before_f for band in bands] + \
-                 [temp1%(afterf, band) for afterf in after_f for band in bands]
+            [temp1%(afterf, band) for afterf in after_f for band in bands]
 
         p   = Pool(len(bands)*2)
         par = partial(r_modis, slic=Linds)
@@ -108,28 +108,28 @@ def get_brdf_six(fname, angles, bands = (7,), Linds = None, do_unc = True):
     else:
         return [brdf*0.001, qa]
         
-	'''
-	if Linds==None:
-	    
-	    br = np.array([r_modis(temp1%(fname, band)) for band in bands])
-	    qa = np.array([r_modis(temp2%(fname, band)) for band in bands])
-	    #mask = (br[:,0,:,:] > 32766) | (br[:,1,:,:] > 32766) |(br[:,2,:,:] > 32766)
-	    brdf = br[:,0,:,:] + br[:,1,:,:]*k_vol + br[:,2,:,:]*k_geo
-	    #brdf = ma.array(brdf, mask = mask)
-	    return [brdf*0.001, qa]
-	else:
-	    Lx, Ly = Linds
-	    br = np.array([r_modis(temp1%(fname, band), slic=[Lx, Ly]) for band in bands])
-	    qa = np.array([r_modis(temp2%(fname, band), slic=[Lx, Ly]) for band in bands])
-	    brdf = br[:,0] + br[:,1]*k_vol + br[:,2]*k_geo
-	    if flag==None:
-		return [brdf*0.001, qa]
-	    else:
-		mask = (qa<=flag)
-		#val_brdf = brdf[:,mask]
-		#val_ins = np.array(Linds)[:,mask]
-		return [brdf*0.001, mask]
-	 '''
+        '''
+        if Linds==None:
+            
+            br = np.array([r_modis(temp1%(fname, band)) for band in bands])
+            qa = np.array([r_modis(temp2%(fname, band)) for band in bands])
+            #mask = (br[:,0,:,:] > 32766) | (br[:,1,:,:] > 32766) |(br[:,2,:,:] > 32766)
+            brdf = br[:,0,:,:] + br[:,1,:,:]*k_vol + br[:,2,:,:]*k_geo
+            #brdf = ma.array(brdf, mask = mask)
+            return [brdf*0.001, qa]
+        else:
+            Lx, Ly = Linds
+            br = np.array([r_modis(temp1%(fname, band), slic=[Lx, Ly]) for band in bands])
+            qa = np.array([r_modis(temp2%(fname, band), slic=[Lx, Ly]) for band in bands])
+            brdf = br[:,0] + br[:,1]*k_vol + br[:,2]*k_geo
+            if flag==None:
+        	return [brdf*0.001, qa]
+            else:
+        	mask = (qa<=flag)
+        	#val_brdf = brdf[:,mask]
+        	#val_ins = np.array(Linds)[:,mask]
+        	return [brdf*0.001, mask]
+         '''
 
 
 

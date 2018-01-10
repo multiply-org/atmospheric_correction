@@ -2,8 +2,10 @@
 from ecmwfapi import ECMWFDataServer
 server = ECMWFDataServer() 
 from datetime import datetime, timedelta
-starting = datetime(2017,1,1)
-for one_day in range(53, 100):
+# starting = datetime(2017,1,1)
+starting = datetime(2017,9,4)
+# for one_day in range(53, 100):
+for one_day in range(0, 1):
     this_date = (starting + timedelta(days = one_day)).strftime('%Y-%m-%d')
     server.retrieve({
 	"class": "mc",

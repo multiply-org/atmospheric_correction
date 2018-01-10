@@ -3,7 +3,9 @@ import sys
 sys.path.insert(0, 'python')
 import numpy as np
 from glob import glob
-import cPickle as pkl
+# import _pickle as pkl
+# import cPickle as pkl
+import dill as pkl
 from multi_process import parmap
 
 class ddv(object):

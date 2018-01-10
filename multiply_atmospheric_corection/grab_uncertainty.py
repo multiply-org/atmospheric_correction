@@ -23,7 +23,8 @@ class grab_uncertainty(object):
         # need to be unpdated later
         self.aot_unc = 0.5
         self.water_unc = 0.5
-        self.ozone_unc = 0.5  
+        self.ozone_unc = 0.5
+
     def get_boa_unc(self,):
         if self.modis_boa is None:
             raise IOError('modis_boa should be specified.')
@@ -32,14 +33,14 @@ class grab_uncertainty(object):
         if self.boa_band is None:
             raise IOError('boa_band should be specified.')
         assert self.modis_boa.shape == self.boa_qa.shape, "shapes do not match."
-	assert len(self.boa_band)   == self.modis_boa.shape[0], "boa_band should match modis_boa."
+        assert len(self.boa_band)   == self.modis_boa.shape[0], "boa_band should match modis_boa."
         generalised_unc = 0.05*self.modis_boa +0.005	
         band_unc = np.zeros_like(self.modis_boa)		
         for i, band in enumerate(self.boa_band):
-	    band_unc[i] = np.maximum(self.mod09_band_unc_dict[band], generalised_unc[i])
+            band_unc[i] = np.maximum(self.mod09_band_unc_dict[band], generalised_unc[i])
         brdf_unc = 0.05 * 1./(self.magic ** self.boa_qa) # the validation of BRDF has 0.05 uncertainty for QA=0
         self.boa_unc = np.sqrt(band_unc**2 + brdf_unc**2, self.brdf_std**2)
-	return self.boa_unc
+        return self.boa_unc
 
 if __name__ == "__main__":
     uc = grab_uncertainty(modis_boa=np.random.rand(4,100,100),\

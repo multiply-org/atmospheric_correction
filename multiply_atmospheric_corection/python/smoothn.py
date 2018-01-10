@@ -331,7 +331,7 @@ def smoothn(y,nS0=10,axis=None,smoothOrder=2.0,sd=None,verbose=False,\
     #---
     while tol>TolZ and nit<MaxIter:
         if verbose:
-          print 'tol',tol,'nit',nit
+          print('tol',tol,'nit',nit)
         nit = nit+1;
         DCTy = dctND(Wtot*(y-z)+z,f=dct);
         if isauto and not remainder(log2(nit),1):
@@ -411,8 +411,8 @@ def smoothn(y,nS0=10,axis=None,smoothOrder=2.0,sd=None,verbose=False,\
   return z,s,exitflag,Wtot
 
 def warning(s1,s2):
-  print s1
-  print s2[0]
+  print(s1)
+  print(s2[0])
 
 ## GCV score
 #---
@@ -644,7 +644,7 @@ def sparseSVD(D):
   try:
     import sparsesvd
   except:
-    print 'bummer ... better get sparsesvd'
+    print('bummer ... better get sparsesvd')
     exit(0)
   Ds = scipy.sparse.csc_matrix(D)
   a = sparsesvd.sparsesvd(Ds,Ds.shape[0])

@@ -41,7 +41,7 @@ def transform(a = 1):
     else:
         tx = 0
         
-        print 'please define your own transformation....'
+        print('please define your own transformation....')
     
     return tx
 # since we have the origins and the steps, we can write a function
@@ -149,7 +149,7 @@ def Find_corresponding_pixels(H_res_fname, destination_res=500):
     if destination_res % 250 == 0:
         pass
     else:
-        print 'destination resolution can only be 250, 500 and 1000 !!!'
+        print('destination resolution can only be 250, 500 and 1000 !!!')
         raise IOError
 
     g = gdal.Open(H_res_fname)
@@ -199,7 +199,7 @@ def Find_corresponding_pixels(H_res_fname, destination_res=500):
             a0, b0 = h,v
     
     # The modis defults
-    pix_num = 4800/(destination_res/250)
+    pix_num = int(4800/(destination_res/250))
     
     inds = {}
     for i in tiles:

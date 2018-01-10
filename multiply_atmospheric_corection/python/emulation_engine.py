@@ -26,7 +26,8 @@ for the atmospheric correction part.
 import os
 import glob
 import sys
-import cPickle
+import dill as cPickle
+# import cPickle
 import logging as log
 import numpy as np
 
@@ -142,13 +143,12 @@ class AtmosphericEmulationEngine(object):
             f = lambda fich: cPickle.load(open(fich, 'r'))
             self.emulators = p.map(f, files)
         except:
-	    for fich in files:
-		emulator_file = os.path.basename(fich)
-		# Create an emulator label (e.g. band name)
-		self.emulator_names = emulator_file
-		self.emulators.append ( cPickle.load(open(fich, 'r')))
-		log.info("Found file %s, storing as %s" %
-	   		    (fich, emulator_file))
+            for fich in files:
+                emulator_file = os.path.basename(fich)
+                # Create an emulator label (e.g. band name)
+                self.emulator_names = emulator_file
+                self.emulators.append ( cPickle.load(open(fich, 'r')))
+                log.info("Found file %s, storing as %s" % (fich, emulator_file))
         self.emulators = np.array(self.emulators).ravel()
         self.n_bands = len(self.emulators)
 
@@ -465,14 +465,12 @@ class RTEmulationEngine(object):
             f = lambda fich: cPickle.load(open(fich, 'r'))
             self.emulators = p.map(f, files)
         else:
-	    for fich in files:
-		emulator_file = os.path.basename(fich)
-		# Create an emulator label (e.g. band name)
-		self.emulator_names = emulator_file
-		self.emulators.append ( cPickle.load(open(fich, 'r')))
-		log.info("Found file %s, storing as %s" %
-			    (fich, emulator_file))
-        
+            for fich in files:
+                emulator_file = os.path.basename(fich)
+                # Create an emulator label (e.g. band name)
+                self.emulator_names = emulator_file
+                self.emulators.append ( cPickle.load(open(fich, 'r')))
+                log.info("Found file %s, storing as %s" % (fich, emulator_file))
         self.n_bands = len(self.emulators)
         
     def predict(self, x):
