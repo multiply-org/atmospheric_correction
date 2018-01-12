@@ -80,8 +80,8 @@ class solve_aerosol(object):
 
     def _load_emus(self, sensor):
         AEE = AtmosphericEmulationEngine(sensor, self.emus_dir)
-        up_bounds = AEE.emulators[0].inputs[:, 4:7].max(axis=0)
-        low_bounds = AEE.emulators[0].inputs[:, 4:7].min(axis=0)
+        up_bounds = AEE.emulators[0][0].inputs[:, 4:7].max(axis=0)
+        low_bounds = AEE.emulators[0][0].inputs[:, 4:7].min(axis=0)
         bounds = np.array([low_bounds, up_bounds]).T
         return AEE, bounds
 
