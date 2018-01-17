@@ -14,8 +14,8 @@ build:
 
 requirements:
   build:
-    - python
+    - util
     - setuptools
 
   run:
-    - python
+    - util

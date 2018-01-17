@@ -1,6 +1,8 @@
 import scipy.stats as stats
-from lhd import lhd
-def create_training_set ( parameters, minvals, maxvals, n_train=200 ):
+from multiply_atmospheric_corection.util.lhd import lhd
+
+
+def create_training_set(parameters, minvals, maxvals, n_train=200):
     """Creates a traning set for a set of parameters specified by 
     ``parameters`` (not actually used, but useful for debugging
     maybe). Parameters are assumed to be uniformly distributed
@@ -23,10 +25,8 @@ def create_training_set ( parameters, minvals, maxvals, n_train=200 ):
     ``create_validation_set``-- Jose:
     https://github.com/jgomezdans/gp_emulator/blob/master/gp_emulator/emulation_helpers.py
     """
-
     distributions = []
     for i,p in enumerate(parameters):
-        distributions.append ( stats.uniform ( loc=minvals[i], \
-                            scale=(maxvals[i]-minvals[i] ) ) )
-    samples = lhd ( dist=distributions, size=n_train )
+        distributions.append ( stats.uniform ( loc=minvals[i], scale=(maxvals[i]-minvals[i] ) ) )
+    samples = lhd(dist=distributions, size=n_train)
     return samples, distributions

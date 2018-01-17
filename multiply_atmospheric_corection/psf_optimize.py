@@ -2,7 +2,7 @@
 import numpy as np
 import sys
 
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'util')
 from scipy import ndimage, signal, optimize
 from multi_process import parmap
 from spatial_mapping import cloud_dilation

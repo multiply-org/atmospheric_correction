@@ -6,12 +6,11 @@ import os
 import struct
 import xml.etree.ElementTree as ET
 import numpy as np
-sys.path.insert(0, '/opt/anaconda/lib/python2.7/site-packages/')
 from osgeo import gdal
 import errno
 
 if len(sys.argv) < 2:
-	print 'usage:  python ', sys.argv[0], ' <XML Tile Metadata File> [Subsample Factor]'
+	print('usage:  python ', sys.argv[0], ' <XML Tile Metadata File> [Subsample Factor]')
 	sys.exit()
 
 
@@ -47,10 +46,10 @@ R = 6378137
 ZONE_LETTERS = "CDEFGHJKLMNPQRSTUVWXX"
 
 def from_latlon(latitude, longitude, force_zone_number=None):
-    if not -80.0 <= latitude <= 84.0:
-        raise OutOfRangeError('latitude out of range (must be between 80 deg S and 84 deg N)')
-    if not -180.0 <= longitude <= 180.0:
-        raise OutOfRangeError('longitude out of range (must be between 180 deg W and 180 deg E)')
+	if not -80.0 <= latitude <= 84.0:
+		raise OutOfRangeError('latitude out of range (must be between 80 deg S and 84 deg N)')
+	if not -180.0 <= longitude <= 180.0:
+		raise OutOfRangeError('longitude out of range (must be between 180 deg W and 180 deg E)')
 
     lat_rad = math.radians(latitude)
     lat_sin = math.sin(lat_rad)
@@ -101,14 +100,14 @@ def from_latlon(latitude, longitude, force_zone_number=None):
 
 
 def latitude_to_zone_letter(latitude):
-    if -80 <= latitude <= 84:
-        return ZONE_LETTERS[int(latitude + 80) >> 3]
-    else:
-        return None
+	if -80 <= latitude <= 84:
+		return ZONE_LETTERS[int(latitude + 80) >> 3]
+	else:
+		return None
 
 
 def latlon_to_zone_number(latitude, longitude):
-    if 56 <= latitude < 64 and 3 <= longitude < 12:
+	if 56 <= latitude < 64 and 3 <= longitude < 12:
         return 32
 
     if 72 <= latitude <= 84 and longitude >= 0:
@@ -153,7 +152,7 @@ def LOSVec( Lat, Lon, Zen, Az ):
 	return ( Sat, Gx )
 
 def GrndVec( Lat, Lon ):
-        Rn = a / sqrt( 1.0 - ecc *sin(Lat)*sin(Lat))
+	Rn = a / sqrt( 1.0 - ecc *sin(Lat)*sin(Lat))
         Gx = ( Rn*cos(Lat)*cos(Lon),
                Rn*cos(Lat)*sin(Lon),
                Rn*(1-ecc)*sin(Lat) )

@@ -3,7 +3,7 @@ import gdal
 import os
 import sys
 
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'util')
 import xml.etree.ElementTree as ET
 import numpy as np
 from multiprocessing import Pool
@@ -249,15 +249,15 @@ class read_s2(object):
                 pass
             else:
                 # print 'Reconstructing Sentinel 2 angles...'
-                subprocess.call(['python', './python/s2a_angle_bands_mod.py', \
-                                 self.s2_file_dir + '/metadata.xml', '10'])
+                # subprocess.call(['python', 'multiply_atmospheric_correction/util/s2a_angle_bands_mod.py', \
+                #                  self.s2_file_dir + '/metadata.xml', '10'])
 
             if self.bands is None:
                 bands = self.s2_bands
             else:
                 bands = self.bands
 
-            self.vaa = {};
+            self.vaa = {}
             self.vza = {}
             fname = [self.s2_file_dir + '/angles/VAA_VZA_%s.img' % band for band in bands]
             f = lambda fn: reproject_data(fn, self.s2_file_dir + '/B04.jp2').data

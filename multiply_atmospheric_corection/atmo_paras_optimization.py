@@ -2,9 +2,9 @@
 import numpy as np
 import sys
 
-sys.path.insert(0, 'python')
-from emulation_engine import AtmosphericEmulationEngine
-from grab_uncertainty import grab_uncertainty
+sys.path.insert(0, 'util')
+from multiply_atmospheric_corection.util.emulation_engine import AtmosphericEmulationEngine
+from multiply_atmospheric_corection.grab_uncertainty import grab_uncertainty
 from scipy import optimize
 
 
@@ -183,7 +183,7 @@ class solving_atmo_paras(object):
             axis=(0, 1))
         full_dJ = [
             self.band_weights[..., None] * dH[:, :, i] * diff / (self.band_weights[..., None].sum() * flat_boa_unc ** 2)
-            for i in xrange(4, 7)]
+            for i in range(4, 7)]
         if is_full:
             J_ = np.array(full_dJ).sum(axis=(1,))
         else:
@@ -276,7 +276,7 @@ if __name__ == "__main__":
     mask[:50, :50] = True
     brdf_std = np.zeros_loke(boa)
     brdf_std[:] = 0.01
-    atmo = solving_atmo_paras('MSI', '/home/ucfajlg/Data/python/S2S3Synergy/optical_emulators', boa, \
+    atmo = solving_atmo_paras('MSI', '/home/ucfajlg/Data/util/S2S3Synergy/optical_emulators', boa, \
                               toa, 0.5, 0.5, 10, 10, 0.5, boa_qa, boa_bands=[645, 869, 469, 555], \
                               band_indexs=[3, 7, 1, 2], mask=mask, prior=prior, atmosphere=atmosphere,
                               brdf_std=brdf_std)

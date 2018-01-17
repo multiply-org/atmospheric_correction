@@ -2,22 +2,22 @@
 import os
 import sys
 
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'util')
 import gdal
 import json
 import datetime
 import logging
 import numpy as np
-from ddv import ddv
+from .ddv import ddv
 from glob import glob
 from scipy import signal, ndimage
 import dill as pkl
 # import cPickle as pkl
 from osgeo import osr
 from smoothn import smoothn
-from grab_s2_toa import read_s2
-from multi_process import parmap
-from reproject import reproject_data
+from .grab_s2_toa import read_s2
+from util.multi_process import parmap
+from .reproject import reproject_data
 from get_brdf import get_brdf_six
 from atmo_paras_optimization import solving_atmo_paras
 from spatial_mapping import Find_corresponding_pixels, cloud_dilation
@@ -80,8 +80,8 @@ class solve_aerosol(object):
 
     def _load_emus(self, sensor):
         AEE = AtmosphericEmulationEngine(sensor, self.emus_dir)
-        up_bounds = AEE.emulators[0][0].inputs[:, 4:7].max(axis=0)
-        low_bounds = AEE.emulators[0][0].inputs[:, 4:7].min(axis=0)
+        up_bounds = AEE.emulators[0].inputs[:, 4:7].max(axis=0)
+        low_bounds = AEE.emulators[0].inputs[:, 4:7].min(axis=0)
         bounds = np.array([low_bounds, up_bounds]).T
         return AEE, bounds
 

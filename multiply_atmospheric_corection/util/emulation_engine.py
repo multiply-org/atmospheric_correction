@@ -26,12 +26,12 @@ for the atmospheric correction part.
 import os
 import glob
 import sys
-import dill as cPickle
-# import cPickle
+# import dill as cPickle
+import _pickle as cPickle
 import logging as log
 import numpy as np
 
-import gp_emulator # unnecessary?
+from gp_emulator import GaussianProcess, MultivariateEmulator # unnecessary?
 
 
 __author__ = "J Gomez-Dans"
@@ -67,11 +67,11 @@ def create_inverse_emulators ( original_emulator, band_pass, sel_par ):
     n_bands = band_pass.shape[0]
     xx = np.array( [ X[:, band_pass[i,:]].sum(axis=1)/ \
         (1.*band_pass[i,:].sum()) \
-        for i in xrange( n_bands ) ] )
+        for i in range( n_bands ) ] )
 
     # A container to store the emulators
     gps = []
-    for  param in sel_par:
+    for i, param in enumerate(sel_par):
         gp = GaussianProcess ( xx.T, y[:, i] )
         gp.learn_hyperparameters( n_tries = 3 )
         gps.append(gp)
@@ -83,10 +83,10 @@ def perband_emulators ( emulators, band_pass ):
     
     n_bands = band_pass.shape[0]
     x_train_pband = [ emulators.X_train[:,band_pass[i,:]].mean(axis=1) \
-        for i in xrange( n_bands ) ]
+        for i in range( n_bands ) ]
     x_train_pband = np.array ( x_train_pband )
     emus = []
-    for i in xrange( n_bands ):
+    for i in range( n_bands ):
         gp = GaussianProcess ( emulators.y_train[:]*1, \
                 x_train_pband[i,:] )
         gp.learn_hyperparameters ( n_tries=5 )
@@ -128,8 +128,7 @@ class AtmosphericEmulationEngine(object):
     def _locate_emulators(self, sensor, emulator_folder):
         self.emulators = []
         self.emulator_names = []
-        files = glob.glob(os.path.join(emulator_folder, 
-                "*%s*.pkl" % sensor))
+        files = glob.glob(os.path.join(emulator_folder, "*%s*.pkl" % sensor))
         files.sort()
         try:
             for fich in files:
@@ -140,14 +139,14 @@ class AtmosphericEmulationEngine(object):
                             (fich, emulator_file))
             from multiprocessing import Pool
             p = Pool(len(files))
-            f = lambda fich: cPickle.load(open(fich, 'r'))
+            f = lambda fich: cPickle.load(open(fich, 'rb'), encoding='latin1')
             self.emulators = p.map(f, files)
         except:
             for fich in files:
                 emulator_file = os.path.basename(fich)
                 # Create an emulator label (e.g. band name)
                 self.emulator_names = emulator_file
-                self.emulators.append ( cPickle.load(open(fich, 'r')))
+                self.emulators.append(cPickle.load(open(fich, 'rb'), encoding='latin1'))
                 log.info("Found file %s, storing as %s" % (fich, emulator_file))
         self.emulators = np.array(self.emulators).ravel()
         self.n_bands = len(self.emulators)
@@ -445,7 +444,7 @@ class RTEmulationEngine(object):
         Currently based on filename patterns, in the future a better
         approach will be to fish the data from a database."""
         
-        self._locate_emulators( model, sensor, emulator_folder)
+        self._locate_emulators( model, sensor, emu_folder)
 
     def _locate_emulators(self, model, sensor, emulator_folder):
         self.emulators = []
@@ -469,7 +468,7 @@ class RTEmulationEngine(object):
                 emulator_file = os.path.basename(fich)
                 # Create an emulator label (e.g. band name)
                 self.emulator_names = emulator_file
-                self.emulators.append ( cPickle.load(open(fich, 'r')))
+                self.emulators.append ( cPickle.load(open(fich, 'r'), encoding='bytes'))
                 log.info("Found file %s, storing as %s" % (fich, emulator_file))
         self.n_bands = len(self.emulators)
         
@@ -481,7 +480,7 @@ class RTEmulationEngine(object):
         H0 = []
         dH = []
         # In here, x is the state for all samples
-        for band in xrange(self.n_bands):
+        for band in range(self.n_bands):
             H0_, dH_ = self.emulators[band].predict (x, do_unc=False)
             H0.append(H0_)
             dH.append(dH)
@@ -492,6 +491,7 @@ class RTEmulationEngine(object):
         
 class RTEmulationEngineSpectral(object):
     """A standard emulation engine for a spectral RT model."""
+
     def __init__ (self, emulator_file, srf):
         # Use case #1: an emulator file is given and loaded.
         # Options: 1.a -> Spectral emulator
@@ -503,11 +503,9 @@ class RTEmulationEngineSpectral(object):
         self.emulator = self._load_emulator(emulator_file)
         self.set_srf(srf)
         
-    def _load_emulator(emulator_file):
-        self.emulator = gp_emulator.MultivariateEmulator(dump=emulator_file)
-        
+    def _load_emulator(self, emulator_file):
+        return MultivariateEmulator(dump=emulator_file)
 
-    
     def set_srf(self, srf):
         self.n_bands = len(srf)
         self.srf = srf
@@ -517,9 +515,9 @@ class RTEmulationEngineSpectral(object):
         f, g = self.emulator.predict ( np.atleast_2d( x ) )
         fwd_model_obs = []
         gradient = []
-        for i in xrange( self.n_bands ):
+        for i in range(self.n_bands):
             d = f*self.srf[i]/(self.srf[i].sum())
             grad = g*self.srf[i][None, :]/(self.srf[i].sum())
-        fwd_model_obs.append ( d)
-        gradient.append ( grad)
+        fwd_model_obs.append(d)
+        gradient.append(grad)
         return np.array(fwd_model_obs).squeeze(), np.array(gradient).squeeze()

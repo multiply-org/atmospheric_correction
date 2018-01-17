@@ -1,7 +1,7 @@
 #/usr/bin/env python 
 import os
 import sys
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'util')
 import gdal
 import json
 import datetime
@@ -32,7 +32,7 @@ class solve_aerosol(object):
                  year, 
                  month, 
                  day,
-                 emus_dir    = '/home/ucfajlg/Data/python/S2S3Synergy/optical_emulators',
+                 emus_dir    = '/home/ucfajlg/Data/util/S2S3Synergy/optical_emulators',
                  mcd43_dir   = '/data/selene/ucfajlg/Ujia/MCD43/',
                  s2_toa_dir  = '/home/ucfafyi/DATA/S2_MODIS/s_data/',
                  global_dem  = '/home/ucfafyi/DATA/Multiply/eles/global_dem.vrt',

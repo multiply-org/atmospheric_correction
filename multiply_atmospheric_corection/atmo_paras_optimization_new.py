@@ -1,6 +1,6 @@
 #/usr/bin/env python 
 import sys
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'util')
 import numpy as np
 from glob import glob
 import cPickle as pkl

@@ -30,16 +30,16 @@ if __name__ == '__main__':
                          if chunk:
                              fp.write(chunk)
 
-    aero = aerosol.solve_aerosol(year, month, day, \
-                         s2_toa_dir  = s2_toa_dir,
-                         mcd43_dir   = './MCD43/', \
-                         emus_dir    = './emus/', \
-                         global_dem  = './eles/global_dem.vrt',\
-                         wv_emus_dir = './emus/wv_msi_retrieval.pkl', \
-                         cams_dir    = './cams/',\
-                         s2_tile     = s2_tile, \
-                         s2_psf      = None)
-    aero.solving_s2_aerosol()
+    # aero = aerosol.solve_aerosol(year, month, day, \
+    #                      s2_toa_dir  = s2_toa_dir,
+    #                      mcd43_dir   = './MCD43/', \
+    #                      emus_dir    = './emus/', \
+    #                      global_dem  = './eles/global_dem.vrt',\
+    #                      wv_emus_dir = './emus/wv_msi_retrieval.pkl', \
+    #                      cams_dir    = './cams/',\
+    #                      s2_tile     = s2_tile, \
+    #                      s2_psf      = None)
+    # aero.solving_s2_aerosol()
     atm = correction.atmospheric_correction(year, \
                                  month, \
                                  day, s2_tile, \

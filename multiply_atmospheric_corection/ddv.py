@@ -1,12 +1,12 @@
 #/usr/bin/env python 
 import sys
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'util')
 import numpy as np
 from glob import glob
 # import _pickle as pkl
 # import cPickle as pkl
 import dill as pkl
-from multi_process import parmap
+from multiply_atmospheric_corection.util.multi_process import parmap
 
 class ddv(object):
     '''
