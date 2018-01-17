@@ -12,3 +12,6 @@
 *.iml
 .ipynb_checkpoints/
 
+# PyCharm
+.idea/
+*.iml
