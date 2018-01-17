@@ -1,12 +1,23 @@
 #/usr/bin/env python 
 import numpy as np
 import sys
-sys.path.insert(0, 'python')
+sys.path.insert(0, 'util')
 from scipy import ndimage, signal, optimize
 from multi_process import parmap
-from spatial_mapping import cloud_dilation
 from create_training_set import create_training_set
 import scipy
+
+
+
+def cloud_dilation(cloud_mask, iteration=1):
+    '''
+    A function for the dilation of cloud mask
+   
+    '''
+    struct = np.ones((3,3)).astype(bool)
+    dila_cloud = ndimage.binary_dilation(cloud_mask, structure=struct, iterations=iteration).astype(bool)
+    return dila_cloud
+
 
 class psf_optimize(object):
     def __init__(self, 
@@ -15,28 +26,33 @@ class psf_optimize(object):
 		 low_img,
                  qa,
                  cloud,
-                 qa_thresh):
+                 qa_thresh,
+                 xstd = 29.75,
+                 ystd = 39,
+                 scale=0.95607605898444503,
+                 offset=0.0086119174434039214):
        self.high_img    = high_img
        self.Hx, self.Hy = high_indexs
        self.low_img     = low_img
        self.cloud       = cloud
        self.qa_thresh   = qa_thresh
        self.qa          = qa
+       self.xstd        = xstd
+       self.ystd        = ystd
        self.shape       = self.high_img.shape
        self.parameters  = ['xstd', 'ystd', 'angle', 'xs', 'ys']
-       self.slop        = 0.95607605898444503
-       self.off         = 0.0086119174434039214
+       self.slop        = scale
+       self.off         = offset
     def _preprocess(self,):
      
-        size = 2*int(round(1.96*39))# set the largest possible PSF size
+        size = 2*int(round(1.96*self.ystd))# set the largest possible PSF size
         self.high_img[0,:]=self.high_img[-1,:]=self.high_img[:,0]=self.high_img[:,-1]= -9999
-        self.bad_pixs = cloud_dilation( (self.high_img <= 0) | self.cloud  | (self.high_img >= 1), iteration=size/2)
-
-        xstd, ystd = 29.75, 39
-        ker = self.gaussian(xstd, ystd, 0)
+        self.bad_pixs = cloud_dilation( (self.high_img < 0.0001) | self.cloud  | (self.high_img >= 1), iteration=int(size/2))
+        #xstd, ystd = 29.75, 39
+        ker = self.gaussian(self.xstd, self.ystd, 0)
         self.conved = signal.fftconvolve(self.high_img, ker, mode='same')
 
-        l_mask = (~self.low_img.mask) & (self.qa<=self.qa_thresh)
+        l_mask = (~self.low_img.mask) & (self.qa<self.qa_thresh)
         h_mask =  ~self.bad_pixs[self.Hx, self.Hy]
         self.lh_mask = l_mask & h_mask
 
@@ -49,7 +65,7 @@ class psf_optimize(object):
         gaus  = np.outer(xgaus, ygaus)
         r_gaus = ndimage.interpolation.rotate(gaus, angle, reshape=True)
         center = np.array(r_gaus.shape)/2
-        cgaus = r_gaus[center[0]-win/2: center[0]+win/2, center[1]-win/2:center[1]+win/2]
+        cgaus = r_gaus[int(center[0]-win/2): int(center[0]+win/2), int(center[1]-win/2):int(center[1]+win/2)]
         if norm:
             return cgaus/cgaus.sum()
         else:
@@ -103,14 +119,19 @@ class psf_optimize(object):
     def fire_shift_optimize(self,):
         #self.S2_PSF_optimization()
         self._preprocess()
+        if self.lh_mask.sum() ==0:
+            self.costs = np.array([100000000000.,])
+            return 0,0
         min_val = [-50,-50]
         max_val = [50,50]
         ps, distributions = create_training_set([ 'xs', 'ys'], min_val, max_val, n_train=50)
-        self.shift_solved = parmap(self.shift_optimize, ps, nprocs=10)    
+        self.shift_solved = parmap(self.shift_optimize, ps)    
         self.paras, self.costs = np.array([i[0] for i in self.shift_solved]), \
                                            np.array([i[1] for i in self.shift_solved])
 
         xs, ys = self.paras[self.costs==self.costs.min()][0].astype(int)
+        if self.costs.min() == 100000000000.:
+            xs, ys = 0, 0
         #print 'Best shift is ', xs, ys, 'with the correlation of', 1-self.costs.min()
         return xs, ys
 
@@ -123,11 +144,11 @@ class psf_optimize(object):
             self.bounds = [12,50],[12,50],[-15,15],[xs-2,xs+2],[ys-2, ys+2]
 
             ps, distributions = create_training_set(self.parameters, min_val, max_val, n_train=50)
-            print 'Start solving...'
+            print('Start solving...')
             self.gaus_solved = parmap(self.gaus_optimize, ps, nprocs=5)
             result = np.array([np.hstack((i[0], i[1])) for i in  self.gaus_solved])
-            print 'solved psf', dict(zip(self.parameters+['cost',],result[np.argmin(result[:,-1])]))
+            print('solved psf', dict(zip(self.parameters+['cost',],result[np.argmin(result[:,-1])])))
             return result[np.argmin(result[:,-1]),:]
         else:
-            print 'Cost is too large, plese check!'
+            print('Cost is too large, plese check!')
             return []

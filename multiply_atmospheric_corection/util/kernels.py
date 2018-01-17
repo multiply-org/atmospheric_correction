@@ -16,36 +16,36 @@ class Kernels:
     def __init__(self,vza,sza,raa,critical=1,RossHS=True,RecipFlag=True,HB=2.0,BR=1.0,MODISSPARSE=True,MODISDENSE=False,RossType='Thick',normalise=1,normalize=0,LiType='Transit',doIntegrals=True,BSAangles=[],nbar=0.0):
         '''
         The class creator sets up the kernels for some angle set. Default Li is MODISSPARSE parameter set
-	The kernels are accessible from:
-		self.Isotropic
-		self.Ross
-		self.Li
-	The angles are accesible from:
-		self.vza (or self.vzaDegrees)
-		self.sza (or self.szaDegrees)
-		self.raa (or self.raaDegrees)
-		N.B. Hot spot direction is vza == sza and raa = 0.0
-	Kernels integrals are acessible from:
-		self.BSAangles (angles in degrees)
-		self.BSA_Isotropic (directional-hemispherical integral of self.Isotropic)
-		self.BSA_Ross (directional-hemispherical integral of self.Ross)
-		self.BSA_Li (directional-hemispherical integral of self.Li)
-		self.WSA_Isotropic (bi-hemispherical integral of self.Isotropic)
-		self.WSA_Ross (bi-hemispherical integral of self.Ross)
-		self.WSA_Li (bi-hemispherical integral of self.Li)
-		N.B. You need to set the doIntegrals flag to True on creating an instance of the kernels class if you 
-		want access to integrals. The processing takes a bit of time.
-	Printing methods are available:
-		self.printIntegrals(header=True,reflectance=False)		
-		self.printKernels(header=True,reflectance=False)
+        The kernels are accessible from:
+                self.Isotropic
+                self.Ross
+                self.Li
+        The angles are accesible from:
+                self.vza (or self.vzaDegrees)
+                self.sza (or self.szaDegrees)
+                self.raa (or self.raaDegrees)
+                N.B. Hot spot direction is vza == sza and raa = 0.0
+        Kernels integrals are acessible from:
+                self.BSAangles (angles in degrees)
+                self.BSA_Isotropic (directional-hemispherical integral of self.Isotropic)
+                self.BSA_Ross (directional-hemispherical integral of self.Ross)
+                self.BSA_Li (directional-hemispherical integral of self.Li)
+                self.WSA_Isotropic (bi-hemispherical integral of self.Isotropic)
+                self.WSA_Ross (bi-hemispherical integral of self.Ross)
+                self.WSA_Li (bi-hemispherical integral of self.Li)
+                N.B. You need to set the doIntegrals flag to True on creating an instance of the kernels class if you 
+                want access to integrals. The processing takes a bit of time.
+        Printing methods are available:
+                self.printIntegrals(header=True,reflectance=False)              
+                self.printKernels(header=True,reflectance=False)
 
-	Required parameters:
+        Required parameters:
 
         @param vza: an array containg view zenith angles in degrees
         @param sza: an array containing solar zenith angles in degrees
         @param raa: an array containg relative azimuth angles in degrees
 
-	Options:
+        Options:
         @option critical=1: set to 1 to exit on error, 0 not to
         @option RecipFlag=True: Li reciprocal flag
         @option HB: Li kernel parameter HB 
@@ -59,17 +59,17 @@ class Kernels:
         @option BSAangles: solar zenith angles at which to calculate directional-hemispherical integral of kernels (default 0-89 in steps of 1 degree). Units: degrees.
         @option nbar: the sza at which the isotropic term is set to if normalise=1 is turned on (default 0)
 
-	Notes:
-	Requires numpy. If you do integrals, this also requires scipy (or rather scipy.integrate)
-	If you want to mimic the results in Wanner et al. 1995, I've set a special function called self.mimic at the end here.
-	
-	
+        Notes:
+        Requires numpy. If you do integrals, this also requires scipy (or rather scipy.integrate)
+        If you want to mimic the results in Wanner et al. 1995, I've set a special function called self.mimic at the end here.
+        
+        
         '''
-	self.__setup(critical=critical,RecipFlag=RecipFlag,RossHS=RossHS,HB=HB,BR=BR,MODISSPARSE=MODISSPARSE,MODISDENSE=MODISDENSE,RossType=RossType,normalise=normalise,normalize=normalize,LiType=LiType,doIntegrals=doIntegrals,BSAangles=BSAangles,nbar=nbar)
+        self.__setup(critical=critical,RecipFlag=RecipFlag,RossHS=RossHS,HB=HB,BR=BR,MODISSPARSE=MODISSPARSE,MODISDENSE=MODISDENSE,RossType=RossType,normalise=normalise,normalize=normalize,LiType=LiType,doIntegrals=doIntegrals,BSAangles=BSAangles,nbar=nbar)
         self.shape = vza.shape
         mask = ma.getmask(vza)
         if mask.shape != self.shape:
-	    mask = (numpy.zeros(vza.shape).astype(bool) + mask).astype(bool)
+            mask = (numpy.zeros(vza.shape).astype(bool) + mask).astype(bool)
         VZA = numpy.array(vza[~mask])
         SZA = numpy.array(sza[~mask])
         RAA = numpy.array(raa[~mask])
@@ -90,8 +90,8 @@ class Kernels:
         self.nbar = nbar
         self.__NEARLYZERO = 1e-20
         self.critical = critical
-	self.FILE = -1
-	self.outputFile = ''
+        self.FILE = -1
+        self.outputFile = ''
         # kernel options etc.
         self.LiType = LiType
         self.RossHS = RossHS
@@ -125,9 +125,9 @@ class Kernels:
             self.normalise = max(normalise,normalize)
 
     def __postProcess(self):
-	'''
-	Private method for dealing with normalisation
-	'''
+        '''
+        Private method for dealing with normalisation
+        '''
         self.LiNorm = 0.
         self.RossNorm = 0.
         self.IsotropicNorm = 0.
@@ -140,7 +140,7 @@ class Kernels:
             self.Li  = self.Li - self.LiNorm
             # depreciate length of arrays (well, teh ones we'll use again in any case)
             self.Ross = self.Ross[0:-1]
-	    self.Li = self.Li[0:-1]
+            self.Li = self.Li[0:-1]
             self.Isotropic = self.Isotropic[0:-1]
             self.vzaDegrees = self.vzaDegrees[0:-1]
             self.szaDegrees = self.szaDegrees[0:-1]
@@ -151,18 +151,18 @@ class Kernels:
             self.raa = self.raa[0:-1]
 
     def __doKernels(self):
-	'''
-	Private method to run the various kernel methods
-	'''
+        '''
+        Private method to run the various kernel methods
+        '''
         # the kernels
         self.IsotropicKernel()
         self.RossKernel()
         self.LiKernel()
 
     def setAngleInfo(self,vza,sza,raa):
-	'''
-	Private method to store and organise the input angle data
-	'''
+        '''
+        Private method to store and organise the input angle data
+        '''
         self.vzaDegrees = numpy.array([vza]).flatten()
         self.szaDegrees = numpy.array([sza]).flatten()
         self.raaDegrees = numpy.array([raa]).flatten()
@@ -170,9 +170,9 @@ class Kernels:
         
         if(self.N != len(self.szaDegrees) or self.N != len(self.raaDegrees)):
             self.error('kernels: inconsistent number of samples in vza, sza and raa data: ' + str(len(self.vzaDegrees)) + ', ' + str(len(self.szaDegrees)) + ', ' + str(len(self.raaDegrees)),critical=self.critical)
-            print self.vzaDegrees
-            print self.szaDegrees
-            print self.raaDegrees
+            print(self.vzaDegrees)
+            print(self.szaDegrees)
+            print(self.raaDegrees)
             return [-1]
         
         if (self.normalise >= 1):
@@ -195,14 +195,14 @@ class Kernels:
 
 
     def __integrateKernels(self,BSAangles=[]):
-	'''
-	Private method to call integration functions for the kernels
+        '''
+        Private method to call integration functions for the kernels
 
 
          NB - this overwrites all kernel info ... so be careful how/where you call it
         @option: BSAangles=[] allows the user to set the sza angles at which directional-hemispherical intergal is calculated, else steps of 1 degree from 0 to 89 (though I wouldnt trust it down to 90)
         This function can be rather slow, so using fewer samples or an approximate function may be a god idea
-	'''
+        '''
         if (self.doIntegrals == False):
             return;
         
@@ -247,8 +247,8 @@ class Kernels:
 
     def __RossKernelPart(self):
         '''
-	Private method to calculate main part of Ross kernel
-	'''
+        Private method to calculate main part of Ross kernel
+        '''
         self.__cos1 = numpy.cos(self.vza)
         self.__cos2 = numpy.cos(self.sza)
         
@@ -260,9 +260,9 @@ class Kernels:
         return
 
     def GetDistance(self):
-	'''
-	Private method to get distance component of Li kernels
-	'''
+        '''
+        Private method to get distance component of Li kernels
+        '''
         temp = self.__tan1*self.__tan1+self.__tan2*self.__tan2-2.*self.__tan1*self.__tan2*self.__cos3;
         w = numpy.where(temp < 0)[0]
         temp[w] = 0.0
@@ -334,35 +334,35 @@ class Kernels:
         self.__cos1, self.__sin1, self.__tan1 = self.GetpAngles(self.__tantv);
         self.__cos2, self.__sin2, self.__tan2 = self.GetpAngles(self.__tanti);
         self.__GetPhaang(); # sets cos & sin phase angle terms 
-	self.__distance = self.GetDistance(); # sets self.temp
-	self.GetOverlap(); # also sets self.temp
+        self.__distance = self.GetDistance(); # sets self.temp
+        self.GetOverlap(); # also sets self.temp
         if self.LiType == 'Sparse':
             if self.RecipFlag == True:
                 self.Li = self.__overlap - self.__temp + 0.5 * (1. + self.__cosphaang) / self.__cos1 / self.__cos2;
             else:
                 self.Li = self.__overlap - self.__temp + 0.5 * (1. + self.__cosphaang) / self.__cos1;
         else:
- 	    if self.LiType == 'Dense':
+            if self.LiType == 'Dense':
                 if self.RecipFlag:
                     self.Li = (1.0 + self.__cosphaang) / (self.__cos1 * self.__cos2 * (self.__temp - self.__overlap)) - 2.0;
                 else:
                     self.Li = (1.0 + self.__cosphaang) / (self.__cos1 * (self.__temp - self.__overlap)) - 2.0;
             else:
-	        B = self.__temp - self.__overlap
-	        w = numpy.where(B <= 2.0)
-	        self.Li = B*0.0
+                B = self.__temp - self.__overlap
+                w = numpy.where(B <= 2.0)
+                self.Li = B*0.0
                 if self.RecipFlag == True:
-	            Li = self.__overlap - self.__temp + 0.5 * (1. + self.__cosphaang) / self.__cos1 / self.__cos2;
-	        else:
-		    Li = self.__overlap - self.__temp + 0.5 * (1. + self.__cosphaang) / self.__cos1;
-	        self.Li[w] = Li[w]
+                    Li = self.__overlap - self.__temp + 0.5 * (1. + self.__cosphaang) / self.__cos1 / self.__cos2;
+                else:
+                    Li = self.__overlap - self.__temp + 0.5 * (1. + self.__cosphaang) / self.__cos1;
+                self.Li[w] = Li[w]
 
-		w = numpy.where(B > 2.0)
-		if self.RecipFlag:
-		    Li = (1.0 + self.__cosphaang) / (self.__cos1 * self.__cos2 * (self.__temp - self.__overlap)) - 2.0;
-		else:
-		    Li = (1.0 + self.__cosphaang) / (self.__cos1 * (self.__temp - self.__overlap)) - 2.0;
-		self.Li[w] = Li[w]
+                w = numpy.where(B > 2.0)
+                if self.RecipFlag:
+                    Li = (1.0 + self.__cosphaang) / (self.__cos1 * self.__cos2 * (self.__temp - self.__overlap)) - 2.0;
+                else:
+                    Li = (1.0 + self.__cosphaang) / (self.__cos1 * (self.__temp - self.__overlap)) - 2.0;
+                self.Li[w] = Li[w]
         return
         
     def IsotropicKernel(self):
@@ -374,17 +374,17 @@ class Kernels:
         return
 
     def RossThin(self):
-	'''
-	Public method - call to calculate RossThin kernel
-	'''
+        '''
+        Public method - call to calculate RossThin kernel
+        '''
         self.__RossKernelPart()
         self.rosselement = self.rosselement/(self.__cos1*self.__cos2)
         return;
 
     def RossThick(self):
-	'''
-	Public method - call to calculate RossThick kernel
-	'''
+        '''
+        Public method - call to calculate RossThick kernel
+        '''
         self.__RossKernelPart()
         self.rosselement = self.rosselement/(self.__cos1+self.__cos2)
         return;
@@ -398,22 +398,22 @@ class Kernels:
         else:
             self.RossThick()
         self.Ross = self.rosselement
-	if self.RossHS != False:
-	    if self.RossHS == True:
-		self.RossHS = 0.25
+        if self.RossHS != False:
+            if self.RossHS == True:
+                self.RossHS = 0.25
             self.Ross = self.Ross * (1 + 1/(1 + self.__phaang/self.RossHS))
     
 
     def dtor(self,x):
-	'''
-	Public method to convert degrees to radians
-	'''
+        '''
+        Public method to convert degrees to radians
+        '''
         return x*numpy.pi/180.0
 
     def rtod(self,x):
-	'''
-	Public method to convert radians to degrees
-	'''
+        '''
+        Public method to convert radians to degrees
+        '''
         return x*180./numpy.pi
     
     def error(self,msg,critical=0,newline=1,code=-1):
@@ -428,15 +428,15 @@ class Kernels:
             nl = '\n'
         else:
             nl = ''
-        print msg + nl
+        print(msg + nl)
         if critical == 1:
             exit([code])
 
 
     def printIntegrals(self,header=True,reflectance=False):
-	'''
-	Public method to print kernel integrals (to stdout only at present)
-	'''
+        '''
+        Public method to print kernel integrals (to stdout only at present)
+        '''
         if(header == True):
             self.printer('# ' + str(self.N) + ' samples Ross: ' + self.RossType + ' Li: ' + self.LiType + ' Reciprocal: ' + str(self.RecipFlag) + ' normalisation: ' + str(self.normalise) + ' HB ' + str(self.HB) + ' BR ' + str(self.BR) + '\n');
             self.printer('# WSA: Isotropic 1.0 Ross ' + str(self.WSA_Ross) + ' Li ' + str(self.WSA_Li))
@@ -456,11 +456,11 @@ class Kernels:
     def printKernels(self,header=True,reflectance=False,file=False):
         '''
         Public method to print kernel values (to stdout only at present)        
-	'''
+        '''
         if(file != False):
-	    if(file != self.outputFile and self.FILE != -1):
-		self.FILE.close()
-	    self.outputFile = file
+            if(file != self.outputFile and self.FILE != -1):
+                self.FILE.close()
+            self.outputFile = file
             self.FILE = open(self.outputFile,'w')
 
         if(header == True):
@@ -483,9 +483,9 @@ class Kernels:
             Public print method ... make more flexible eg for printing to files at some point
             ''' 
             if (self.FILE == -1):
-		print msg,
-	    else:
-		self.FILE.write(msg)
+                print(msg),
+            else:
+                self.FILE.write(msg)
 
 
 # some things required for the numerical integration
@@ -527,7 +527,7 @@ def readASCII(inputFile,dobands=False):
     bands = header.split()[3:3+nBands]
     Bands = numpy.zeros(nBands)
     for i in range(nBands):
-	Bands[i] = float(bands[i])
+        Bands[i] = float(bands[i])
     strdata = FILE.readlines()
     FILE.close()
     N = len(strdata)
@@ -555,7 +555,7 @@ def readASCII(inputFile,dobands=False):
     if dobands == True:
         return vza,sza,raa,refl,doy,Bands
     else:
-	return vza,sza,raa,refl,doy
+        return vza,sza,raa,refl,doy
 
 def readPOLDER(inputFile,type=1):
     FILE = open(inputFile,'r')
@@ -567,15 +567,15 @@ def readPOLDER(inputFile,type=1):
     RAA = numpy.zeros(N)
     REFL =  numpy.zeros([5,N])
     for i in range(N):
-	s = strdata[i].split()
+        s = strdata[i].split()
         if( type == 1):
-	    VZA[i] = float(s[4])
-	    SZA[i] = float(s[2])
+            VZA[i] = float(s[4])
+            SZA[i] = float(s[2])
             RAA[i] = float(s[5])
-	    for j in range(5):
-	        REFL[j,i] = float(s[j+6])
+            for j in range(5):
+                REFL[j,i] = float(s[j+6])
         else:
- 	   if (type == 2):
+           if (type == 2):
                 VZA[i] = float(s[2])
                 SZA[i] = float(s[4])
                 RAA[i] = float(s[5]) - float(s[3])
@@ -638,10 +638,10 @@ def legend(*args, **kwargs):
 
 def lutInvertRossHS(VZA,SZA,RAA,REFL,N=1000,fixXi=False,RossType='Thick',LiType='Dense',normalise=1,RecipFlag=True,MODISSPARSE=True):
     if ( fixXi != False ):
-	N = 1
-	rhs = numpy.array([fixXi])
+        N = 1
+        rhs = numpy.array([fixXi])
     else:
-    	rhs = numpy.array(range(N))*10*(numpy.pi/180.)/N
+        rhs = numpy.array(range(N))*10*(numpy.pi/180.)/N
     rmse = numpy.zeros(N)
     for i in range(N):
       rmse[i],P,FWD,phaseAngle = invertData(VZA,SZA,RAA,REFL,RossType=RossType,LiType=LiType,RossHS=rhs[i],normalise=normalise,RecipFlag=RecipFlag,MODISSPARSE=MODISSPARSE)
@@ -658,13 +658,13 @@ def testLisa(inputFile,buff=30,LiType='Sparse',RossType='Thick',plot=False,verbo
     else:
         msza = fsza
     if verbose == True:
-        print 'nbar at',msza
+        print('nbar at',msza)
         
     nbands = len(bands)
     if nbands == 4:
-	bux = [bu[1], bu[4], bu[0], bu[6]]
+        bux = [bu[1], bu[4], bu[0], bu[6]]
     else:
-	bux = bu
+        bux = bu
     mind = min(doy)
     maxd = max(doy)
     w1 = numpy.where(doy >= (mind + buff))
@@ -697,90 +697,90 @@ def testLisa(inputFile,buff=30,LiType='Sparse',RossType='Thick',plot=False,verbo
     for dos in sampledays:
         rmse,P,FWD,refl,idoy,unc = lisaInvert(vza,sza,raa,refl,doy,dos,LiType=LiType,RossType=RossType,nbar=msza)
         # calculate significance of step change in 1st 2 bands
-	# P[i,6] is the magnitude of step change
-	dos2 = dos+1
+        # P[i,6] is the magnitude of step change
+        dos2 = dos+1
         for i in range(len(bux)):
             iso[i] = P[i,0] + dos*P[i,3] + dos*dos* P[i,4] + dos*dos*dos*P[i,5]
             sig[count][i] = P[i,6] / (unc * bux[i])
             rel[count][i] = P[i,6]/iso[i]
-	    isoPost[i] = P[i,0] + dos2*P[i,3] + dos2*dos2* P[i,4] + dos2*dos2*dos2*P[i,5] + P[i,6] 
-	# do spectral mixture modelling on iso
-	if nbands == 7:
-	    # loff = 400
-	    # l' = l - loff
-	    # lmax = 2000 - loff
+            isoPost[i] = P[i,0] + dos2*P[i,3] + dos2*dos2* P[i,4] + dos2*dos2*dos2*P[i,5] + P[i,6] 
+        # do spectral mixture modelling on iso
+        if nbands == 7:
+            # loff = 400
+            # l' = l - loff
+            # lmax = 2000 - loff
             # rhoBurn = a0 + a1(l' - l'^2/(2 lmax)) = a0 + a1 * lk
-	    # lmax = 
- 	    # post = pre * (1-fcc) + fcc * rhoBurn	
-	    # post = pre * (1-fcc) + fcc * a0 + fcc * a1 * lk
+            # lmax = 
+            # post = pre * (1-fcc) + fcc * rhoBurn      
+            # post = pre * (1-fcc) + fcc * a0 + fcc * a1 * lk
             # post - pre = A + B * lk - fcc * pre
             # where
-	    # A = fcc * a0
-	    # B = fcc * a1
-	    y = numpy.matrix(isoPost - iso)
+            # A = fcc * a0
+            # B = fcc * a1
+            y = numpy.matrix(isoPost - iso)
             K[2] = iso
-	    M = K * K.transpose()
-	    MI = M.I
-	    V = K*y.transpose()   
+            M = K * K.transpose()
+            MI = M.I
+            V = K*y.transpose()   
             # spectral parsamsters
-	    sP = numpy.array((MI*V).transpose())[0]
+            sP = numpy.array((MI*V).transpose())[0]
             fcc = -sP[2]
             a0 = sP[0]/fcc
-	    a1 = sP[1]/fcc
-	    sBurn = a0 + lk*a1 
- 	    sFWD = iso*(1-fcc) + fcc*sBurn
-	    sPre = iso
-	    sPost = isoPost
-	else:
-	    fcc = 0
-	    a0 = 0
-	    a1 = 0
-	    sBurn = 0
-	    sFWD = 0
-	    sPre = 0
-	    sPost = 0
-       	if nbands == 4:
-	    Test = sig[count][0] <0 and sig[count][1] < 0 and ((sig[count][2]>sig[count][0] and sig[count][2]>sig[count][1]) or (sig[count][3]>sig[count][0] and sig[count][3]>sig[count][1])) 
-	else:
-	    Test = a0 >= 0 and a1 >= 0 and fcc >= 0 and fcc <= 1 and a0 + a1 <= 1.0 and P[1,6] < 0 and P[4,6] < 0
+            a1 = sP[1]/fcc
+            sBurn = a0 + lk*a1 
+            sFWD = iso*(1-fcc) + fcc*sBurn
+            sPre = iso
+            sPost = isoPost
+        else:
+            fcc = 0
+            a0 = 0
+            a1 = 0
+            sBurn = 0
+            sFWD = 0
+            sPre = 0
+            sPost = 0
+        if nbands == 4:
+            Test = sig[count][0] <0 and sig[count][1] < 0 and ((sig[count][2]>sig[count][0] and sig[count][2]>sig[count][1]) or (sig[count][3]>sig[count][0] and sig[count][3]>sig[count][1])) 
+        else:
+            Test = a0 >= 0 and a1 >= 0 and fcc >= 0 and fcc <= 1 and a0 + a1 <= 1.0 and P[1,6] < 0 and P[4,6] < 0
 
             # put in conditions etc...
-	if Test: 
-		# valid sample
+        if Test: 
+                # valid sample
                 rmse1 = numpy.matrix(rmse)
-  		rmse1 = numpy.array(numpy.sqrt(rmse1*rmse1.transpose()/len(bux)))[0][0]
-	        thissig = min([sig[count][0],sig[count][1]])
-		#print dos,thissig
-		#if mindoy == False or thissig < minsig:
-	        if nbands == 4:
-		    Test2 = mindoy == False or rmse1 < minrmsei1
-	        else:
-		    Test2 = mindoy == False or fcc > maxfcc 
-		if verbose:
-		    print dos,fcc,a0,a1,thissig,rmse1
-		if Test2:
-		        maxpre = sPre
-			maxpost = sPost
-		        maxfcc = fcc
-			maxa0 = a0
-			maxa1 = a1
-			maxsBurn = sBurn
-			maxsFWD = sFWD
-			minsig = thissig
-			mindoy = dos
-			minrmse1 = rmse1
-			minrmse = rmse
-			minP = P
-			minFWD = FWD
-			minrefl = refl
-			mincount = count
-	count += 1
+                rmse1 = numpy.array(numpy.sqrt(rmse1*rmse1.transpose()/len(bux)))[0][0]
+                thissig = min([sig[count][0],sig[count][1]])
+                #print dos,thissig
+                #if mindoy == False or thissig < minsig:
+                if nbands == 4:
+                    Test2 = mindoy == False or rmse1 < minrmsei1
+                else:
+                    Test2 = mindoy == False or fcc > maxfcc 
+                if verbose:
+                    print(dos,fcc,a0,a1,thissig,rmse1)
+                if Test2:
+                        maxpre = sPre
+                        maxpost = sPost
+                        maxfcc = fcc
+                        maxa0 = a0
+                        maxa1 = a1
+                        maxsBurn = sBurn
+                        maxsFWD = sFWD
+                        minsig = thissig
+                        mindoy = dos
+                        minrmse1 = rmse1
+                        minrmse = rmse
+                        minP = P
+                        minFWD = FWD
+                        minrefl = refl
+                        mincount = count
+        count += 1
     if mincount != -1:
-	if nbands == 4:
-    	    return doy,minrmse,minP,minFWD,minrefl,mindoy,sig[mincount],rel[mincount]
-	else:
-	    if plot:
-		import pylab
+        if nbands == 4:
+            return doy,minrmse,minP,minFWD,minrefl,mindoy,sig[mincount],rel[mincount]
+        else:
+            if plot:
+                import pylab
                 x = [mindoy,mindoy]
                 y = [0.0,max(numpy.array([minFWD.flatten(),minrefl.flatten()]).flatten())+0.1]
                 pylab.plot(x,y)
@@ -802,18 +802,18 @@ def testLisa(inputFile,buff=30,LiType='Sparse',RossType='Thick',plot=False,verbo
                 prenorm = numpy.squeeze(numpy.array(prenorm))
                 postnorm = numpy.squeeze(numpy.array(postnorm))
                 
-                pylab.plot(bands,prenorm,'bo',label='pre-burn')	
+                pylab.plot(bands,prenorm,'bo',label='pre-burn') 
                 pylab.plot(bands,postnorm,'go',label='post-burn')
-		pylab.plot(bands,maxsFWD,'g^',label='fwd model')
-		pylab.plot(bands,maxfcc*maxsBurn,'rD',label='fcc * burn signal')
-		pylab.legend(loc=0)
-		pylab.show()
-	    return doy,minrmse,minP,minFWD,minrefl,mindoy,sig[mincount],rel[mincount],maxfcc,maxa0,maxa1
+                pylab.plot(bands,maxsFWD,'g^',label='fwd model')
+                pylab.plot(bands,maxfcc*maxsBurn,'rD',label='fcc * burn signal')
+                pylab.legend(loc=0)
+                pylab.show()
+            return doy,minrmse,minP,minFWD,minrefl,mindoy,sig[mincount],rel[mincount],maxfcc,maxa0,maxa1
     else:
-	if nbands == 4:
-	    return False,False,False,False,False,False,False,False
-	else:
-	    return False,False,False,False,False,False,False,False,False,False,False
+        if nbands == 4:
+            return False,False,False,False,False,False,False,False
+        else:
+            return False,False,False,False,False,False,False,False,False,False,False
 
 def lisaInvert(vza,sza,raa,refl,doy,dos,LiType='Sparse',RossType='Thick',xi=False,nbar=0.0):
     doy2 = doy*doy
@@ -844,7 +844,7 @@ def lisaInvert(vza,sza,raa,refl,doy,dos,LiType='Sparse',RossType='Thick',xi=Fals
     for i in range(nBands):
         FWD[i,:] = P[i,:] * K
         d = numpy.array((FWD[i,:] - refl[i,:])[0])
-	mse[i] =  (d * d).mean()
+        mse[i] =  (d * d).mean()
     rmse =  numpy.sqrt(mse)
     return rmse,P,FWD,refl,doy, numpy.sqrt(MI[6,6])
 #pylab.plot(doy,refl[0,:].flatten())
@@ -858,15 +858,15 @@ def testMe(fixXi=.02617993877991494365,LiType='Sparse',RossType='Thick',file='po
     rmse,xi,P,FWD,x,y,phi=lutInvertRossHS(VZA,SZA,RAA,REFL,LiType=LiType,RossType=RossType,N=N,fixXi=fixXi)
     if ( ofile == True ):
         aofile = file + '.kernelModelled'
-	FILE = open(aofile,'w')
-	FILE.write('# xi = ' + str(xi) + ' rmse = ' + str(rmse) + '1:vza 2:sza 3:relphi 4:obs(443) 5:mod(443) 6:obs(565) 7:mod(565) 8:obs(670) 9:mod(670) 10:obs(765) 11:mod(765) 12:obs(865) 13:mod(865)\n')
-	for i in range(len(VZA)):
-	    ostr = str(VZA[i]) + ' ' + str(SZA[i]) + ' ' + str(-RAA[i]) + ' ' 
-	    for j in range(5):
-		ostr = ostr + str(REFL[j,i]) + ' ' + str(FWD[j,i]) + ' '
-	    ostr = ostr + '\n'
-	    FILE.write(ostr)
-	FILE.close()
+        FILE = open(aofile,'w')
+        FILE.write('# xi = ' + str(xi) + ' rmse = ' + str(rmse) + '1:vza 2:sza 3:relphi 4:obs(443) 5:mod(443) 6:obs(565) 7:mod(565) 8:obs(670) 9:mod(670) 10:obs(765) 11:mod(765) 12:obs(865) 13:mod(865)\n')
+        for i in range(len(VZA)):
+            ostr = str(VZA[i]) + ' ' + str(SZA[i]) + ' ' + str(-RAA[i]) + ' ' 
+            for j in range(5):
+                ostr = ostr + str(REFL[j,i]) + ' ' + str(FWD[j,i]) + ' '
+            ostr = ostr + '\n'
+            FILE.write(ostr)
+        FILE.close()
     vza = numpy.array(range(141))*1.0 - 70
     raa = vza*0.0 
     sza = raa - int(SZA.mean())
@@ -880,7 +880,7 @@ def testMe(fixXi=.02617993877991494365,LiType='Sparse',RossType='Thick',file='po
         aofile = file + '.kernelPplane'
         FILE = open(aofile,'w')
         FILE.write('# pplane plot at mean sza of observations: sza = ' +  str(sza[0]) + '\n')
-	FILE.write('# 1:vza(pplane -ve = hs) 2:r(443) 3:r(565) 4:r(670) 5:r(765) 6:r(865)\n')
+        FILE.write('# 1:vza(pplane -ve = hs) 2:r(443) 3:r(565) 4:r(670) 5:r(765) 6:r(865)\n')
         for i in range(len(vza)):
             ostr = str(vza[i]) + ' '      
             for j in range(5):
@@ -911,8 +911,8 @@ def invertData(VZA,SZA,RAA,REFL,RossType='Thick',LiType='Dense',RossHS=False,nor
     P = numpy.matrix(numpy.zeros([nBands,3]))
     for i in range(nBands):
         R = numpy.matrix(REFL[i,:])
-	V = K*R.transpose()
-	P[i,:] = (MI*V).transpose()
+        V = K*R.transpose()
+        P[i,:] = (MI*V).transpose()
     # rmse
     FWD = P * K
     d = FWD - REFL
@@ -932,11 +932,11 @@ def mimic(doPrint=False,doPlot=False,RossHS=False,RecipFlag=False,thisSza=None):
             doPrint=True    : print results to stdout (default doPrint=False)
 
     The method returns:
-	VZA,SZA,RAA,RossThick,RossThin,LiSparse,LiDense,Roujean,LiTransit
+        VZA,SZA,RAA,RossThick,RossThin,LiSparse,LiDense,Roujean,LiTransit
     where all are numy arrays of dimensions 3 x nSamples 
     so:
-	VZA[0,:],RossThick[0,:] are the results for sza = 0.0
-	VZA[1,:],RossThick[1,:] are the results for sza = 30.0
+        VZA[0,:],RossThick[0,:] are the results for sza = 0.0
+        VZA[1,:],RossThick[1,:] are the results for sza = 30.0
         VZA[2,:],RossThick[2,:] are the results for sza = 60.0
 
     '''
@@ -960,25 +960,25 @@ def mimic(doPrint=False,doPlot=False,RossHS=False,RecipFlag=False,thisSza=None):
     # fill the angle info
     RossHS=RossHS
     for i in range(len(SZAS)):
-  	SZA[i,:] = SZAS[i]
-	VZA[i,:] = vza[:] 
-	RAA[i,:] = 0.0
+        SZA[i,:] = SZAS[i]
+        VZA[i,:] = vza[:] 
+        RAA[i,:] = 0.0
         # do the kernels
         kk = Kernels(VZA[i,:] ,SZA[i,:],RAA[i,:],RossHS=RossHS,MODISSPARSE=True,RecipFlag=RecipFlag,normalise=1,doIntegrals=False,LiType='Dense',RossType='Thick')
-    	RossThick[i,:] = kk.Ross[:]
+        RossThick[i,:] = kk.Ross[:]
         LiDense[i,:] = kk.Li[:]
- 	if doPrint == True:
-		kk.printKernels(file='RossThickLiDense.' + str(SZAS[i]) + '.dat')
-		kk.printer('')
-	kk = Kernels(VZA[i,:] ,SZA[i,:],RAA[i,:],RossHS=RossHS,MODISSPARSE=True,RecipFlag=RecipFlag,normalise=1,doIntegrals=False,LiType='Sparse',RossType='Thin')
-	RossThin[i,:] = kk.Ross[:]
+        if doPrint == True:
+                kk.printKernels(file='RossThickLiDense.' + str(SZAS[i]) + '.dat')
+                kk.printer('')
+        kk = Kernels(VZA[i,:] ,SZA[i,:],RAA[i,:],RossHS=RossHS,MODISSPARSE=True,RecipFlag=RecipFlag,normalise=1,doIntegrals=False,LiType='Sparse',RossType='Thin')
+        RossThin[i,:] = kk.Ross[:]
         LiSparse[i,:] = kk.Li[:]
         if doPrint == True:
                 kk.printKernels(file='RossThinLiSparse.' + str(SZAS[i]) + '.dat')
                 kk.printer('')
-	kk = Kernels(VZA[i,:] ,SZA[i,:],RAA[i,:],RossHS=RossHS,MODISSPARSE=True,RecipFlag=RecipFlag,normalise=1,doIntegrals=False,LiType='Roujean',RossType='Thin')
-	Roujean[i,:] = kk.Li[:]
-	if doPrint == True:
+        kk = Kernels(VZA[i,:] ,SZA[i,:],RAA[i,:],RossHS=RossHS,MODISSPARSE=True,RecipFlag=RecipFlag,normalise=1,doIntegrals=False,LiType='Roujean',RossType='Thin')
+        Roujean[i,:] = kk.Li[:]
+        if doPrint == True:
                 kk.printKernels(file='RossThinRoujean.' + str(SZAS[i]) + '.dat')
                 kk.printer('')
         kk = Kernels(VZA[i,:] ,SZA[i,:],RAA[i,:],RossHS=RossHS,MODISSPARSE=True,RecipFlag=RecipFlag,normalise=1,doIntegrals=False,LiType='Transit',RossType='Thin')
@@ -988,23 +988,23 @@ def mimic(doPrint=False,doPlot=False,RossHS=False,RecipFlag=False,thisSza=None):
                 kk.printer('')
     if (doPlot == True):
         import pylab
-	x = [-90.0,90.0]
-	y = [0.0,0.0]
-	for i in range(len(SZAS)):
-	    sza = SZAS[i]
- 	    pylab.clf()
-	    pylab.xlabel('View Zenith Angle')
-	    pylab.ylabel('Kernel Value')
-	    pylab.title('Solar Zenith Angle ' + str(sza) + ' Degrees')
-	    pylab.plot(x,y)
-	    pylab.plot(kk.vzaDegrees,RossThick[i,:],label='RThick')
+        x = [-90.0,90.0]
+        y = [0.0,0.0]
+        for i in range(len(SZAS)):
+            sza = SZAS[i]
+            pylab.clf()
+            pylab.xlabel('View Zenith Angle')
+            pylab.ylabel('Kernel Value')
+            pylab.title('Solar Zenith Angle ' + str(sza) + ' Degrees')
+            pylab.plot(x,y)
+            pylab.plot(kk.vzaDegrees,RossThick[i,:],label='RThick')
             pylab.plot(kk.vzaDegrees,RossThin[i,:],label='RThin')
             pylab.plot(kk.vzaDegrees,LiSparse[i,:],label='LiSp')
             pylab.plot(kk.vzaDegrees,LiDense[i,:],label='LiDen')
             pylab.plot(kk.vzaDegrees,Roujean[i,:],label='Roujean')
             pylab.plot(kk.vzaDegrees,LiTransit[i,:],label='LiTrans')
-	    pylab.axis([-90.0,90.0,-3.0,3.0])
+            pylab.axis([-90.0,90.0,-3.0,3.0])
             pylab.legend(loc=0)
-	    pylab.show()
+            pylab.show()
 
     return VZA,SZA,RAA,RossThick,RossThin,LiSparse,LiDense,Roujean,LiTransit
