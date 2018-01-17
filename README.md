@@ -17,5 +17,8 @@ This atmospheric correction method uses MODIS MCD43 BRDF product to get a coarse
 
 * Arguments inside [ ] means optional.
 
+## gp_emulator:
+If you are using python 3.6, please reinstall gp_emulator on branch python_3_6_compatible.
+
 ## Output:
 The outputs are the corrected TOA images saved as `B0*_sur.tif` for each band. TOA_RGB.tif and BOA_RGB.tif are generated for a fast visual check of correction results. They all under `/directory/where/you/store/s2/data/29/S/QB/2017/9/4/0/` as the example usage.
