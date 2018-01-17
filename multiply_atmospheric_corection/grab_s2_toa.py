@@ -87,15 +87,21 @@ class read_s2(object):
                           max(geo_t[3], geo_t[3] + y_size * geo_t[5])
             xRes, yRes  = abs(geo_t[1]), abs(geo_t[5])
             try:
-                self.cirrus = gdal.Rasterize("", self.s2_file_dir+ "/qi/MSK_CLOUDS_B00.gml", \
-                                             format="MEM", xRes=xRes, yRes=yRes, where="maskType='CIRRUS'", \
-                                             outputBounds=[xmin, ymin, xmax, ymax], noData=np.nan, burnValues=1).ReadAsArray()
+                if len(open(self.s2_file_dir+ "/qi/MSK_CLOUDS_B00.gml", 'rb').readlines())>5:
+                    self.cirrus = gdal.Rasterize("", self.s2_file_dir+ "/qi/MSK_CLOUDS_B00.gml", \
+                                                 format="MEM", xRes=xRes, yRes=yRes, where="maskType='CIRRUS'", \
+                                                 outputBounds=[xmin, ymin, xmax, ymax], noData=np.nan, burnValues=1).ReadAsArray()
+                else:
+                    self.cirrus = np.zeros((x_size, y_size)).astype(bool)
             except:
                 self.cirrus = np.zeros((x_size, y_size)).astype(bool)
             try:
-                self.cloud  = gdal.Rasterize("", self.s2_file_dir+ "/qi/MSK_CLOUDS_B00.gml", \
+                if len(open(self.s2_file_dir+ "/qi/MSK_CLOUDS_B00.gml", 'rb').readlines())>5:
+                    self.cloud  = gdal.Rasterize("", self.s2_file_dir+ "/qi/MSK_CLOUDS_B00.gml", \
                                              format="MEM", xRes=xRes, yRes=yRes, where="maskType='OPAQUE'", \
                                              outputBounds=[xmin, ymin, xmax, ymax], noData=np.nan, burnValues=2).ReadAsArray()
+                else:
+                    self.cirrus = np.zeros((x_size, y_size)).astype(bool)
             except:
                 self.cloud  = np.zeros((x_size, y_size)).astype(bool)
             cloud_mask  = self.cirrus + self.cloud

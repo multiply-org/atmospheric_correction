@@ -1,4 +1,5 @@
 *.pyc
+munich.sh
 *.tif
 *.nc
 *.hdf

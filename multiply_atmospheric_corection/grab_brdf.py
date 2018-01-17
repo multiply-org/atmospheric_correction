@@ -126,7 +126,8 @@ def MCD43_SurRef(MCD43_dir, example_file, year, doy, ang_files, sun_view_ang_sca
                              temp2%(glob.glob(f_temp%(day, tile))[0], band)] for \
                              tile in unique_tile] for band in bands for day in days]).transpose(0,2,1)
     except:
-        raise IOError('Please download MCD43A1.006 files for tile(s): ', list(unique_tile), 'on dates', days)
+        print('Please download MCD43A1.006 files for tile(s): ', list(unique_tile), 'on dates', days)
+        raise IOError
     g       = gdal.Open(example_file)
     mg      = reproject_data(example_file, gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float64).g
     temp_data = ~np.isnan(mg.ReadAsArray())

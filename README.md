@@ -13,7 +13,7 @@ This atmospheric correction method uses MODIS MCD43 BRDF product to get a coarse
 
 ## Usage:
 * A typical usage is:
-`python Sentinel_atmo_cor.py -f /directory/where/you/store/s2/data/29/S/QB/2017/9/4/0/ [-m MCD43_dir -e emus_dir -d global_DEM -c Cams_dir]`
+`python Sentinel_atmo_cor.py -f /directory/where/you/store/s2/data/29/S/QB/2017/1/12/0/ [-m MCD43_dir -e emus_dir -d global_DEM -c Cams_dir]`
 
 * Arguments inside [ ] means optional.
 
