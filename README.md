@@ -12,9 +12,10 @@ This atmospheric correction method uses MODIS MCD43 BRDF product to get a coarse
 * emus (`multiply_atmospheric_corection/emus`): emulators for the 6S and wv restrival, can be found at: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
 
 ## Usage:
-A typical usage is:
- `python Sentinel_atmo_cor.py -f /directory/where/you/store/s2/data/29/S/QB/2017/9/4/0/ [-m MCD43_dir -e emus_dir -d global_DEM -c Cams_dir]`
-  argumments inside [] means optional.
+* A typical usage is:
+`python Sentinel_atmo_cor.py -f /directory/where/you/store/s2/data/29/S/QB/2017/9/4/0/ [-m MCD43_dir -e emus_dir -d global_DEM -c Cams_dir]`
+
+* Argumments inside [ ] means optional.
 
 ## Output:
 The outputs are the corrected TOA images saved as `B0*_sur.tif` for each band. TOA_RGB.tif and BOA_RGB.tif are generated for a fast visual check of correction results. They all under `/directory/where/you/store/s2/data/29/S/QB/2017/9/4/0/` as the example usage.
