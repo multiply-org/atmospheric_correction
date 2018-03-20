@@ -13,9 +13,9 @@ This atmospheric correction method uses MODIS MCD43 BRDF product to get a coarse
 
 ## Usage:
 * A typical usage for Sentinel 2 is:
-`python Sentinel_atmo_cor.py -f /directory/where/you/store/s2/data/29/S/QB/2017/1/12/0/ [-m MCD43_dir -e emus_dir -d global_DEM -c cams_dir]`
+`./Sentinel2_AtmoCor.py -f /directory/where/you/store/s2/data/29/S/QB/2017/1/12/0/ [-m MCD43_dir -e emus_dir -d global_DEM -c cams_dir]`
 * A typical usage for Landsat 8 is:
-`python Landsat8_atmo_cor.py -f /directory/where/you/store/l8/data/LC08_L1TP_029029_20160720_20170222_01_T1 [-m MCD43_dir -e emus_dir -d global_DEM -c cams_dir]`
+`./Landsat8_AtmoCor.py -f /directory/where/you/store/l8/data/LC08_L1TP_029029_20160720_20170222_01_T1 [-m MCD43_dir -e emus_dir -d global_DEM -c cams_dir]`
 * Arguments inside [ ] means optional, in the case you store the data in the framework specified above.
 
 ## gp_emulator:
@@ -23,7 +23,7 @@ If you are using python 3.6, please reinstall gp_emulator on branch `python_3_6_
 
 ## Output:
 ### Sentinel 2:
-The outputs are the corrected TOA images saved as `B0*_sur.tif` for each band. TOA_RGB.tif and BOA_RGB.tif are generated for a fast visual check of correction results. They are all under `/directory/where/you/store/s2/data/29/S/QB/2017/9/4/0/` as the example usage.
+The outputs are the corrected TOA images saved as `B0*_sur.tif` for each band and uncertainty `B0*_sur_unc.tif`. TOA_RGB.tif and BOA_RGB.tif are generated for a fast visual check of correction results. They are all under `/directory/where/you/store/s2/data/29/S/QB/2017/9/4/0/` as the example usage.
 
 ### Landsat 8:
-The outputs are the corrected TOA images saved as `LC08_L1TP_029029_20160720_20170222_01_T1_sur_b*.tif` for each band, and `LC08_L1TP_029029_20160720_20170222_01_T1_TOA_RGB.tif` and `LC08_L1TP_029029_20160720_20170222_01_T1_BOA_RGB.tif` are also generated for fast visual check. They are all under `/directory/where/you/store/l8/data/LC08_L1TP_029029_20160720_20170222_01_T1`.
+The outputs are the corrected TOA images saved as `LC08_L1TP_029029_20160720_20170222_01_T1_sur_b*.tif` for each band and  uncertainty `LC08_L1TP_029029_20160720_20170222_01_T1_sur_b*_unc.tif`, and `LC08_L1TP_029029_20160720_20170222_01_T1_TOA_RGB.tif` and `LC08_L1TP_029029_20160720_20170222_01_T1_BOA_RGB.tif` are also generated for fast visual check. They are all under `/directory/where/you/store/l8/data/LC08_L1TP_029029_20160720_20170222_01_T1`.
