@@ -21,8 +21,6 @@ task*
 *.iml
 */util/l8_angles/l8_angles
 .ipynb_checkpoints/
-*/S2_data/*
-*/L8_data/*
 */images/*
 */old_code/*
 
