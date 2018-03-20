@@ -3,6 +3,7 @@ import numpy as np
 import sys
 sys.path.insert(0, 'util')
 from scipy import ndimage, signal, optimize
+from scipy.fftpack import dct, idct
 from multi_process import parmap
 from create_training_set import create_training_set
 import scipy
@@ -46,17 +47,28 @@ class psf_optimize(object):
     def _preprocess(self,):
      
         size = 2*int(round(1.96*self.ystd))# set the largest possible PSF size
-        self.high_img[0,:]=self.high_img[-1,:]=self.high_img[:,0]=self.high_img[:,-1]= -9999
+        #self.high_img[0,:]=self.high_img[-1,:]=self.high_img[:,0]=self.high_img[:,-1]= -9999
         self.bad_pixs = cloud_dilation( (self.high_img < 0.0001) | self.cloud  | (self.high_img >= 1), iteration=int(size/2))
         #xstd, ystd = 29.75, 39
-        ker = self.gaussian(self.xstd, self.ystd, 0)
-        self.conved = signal.fftconvolve(self.high_img, ker, mode='same')
+        #ker = self.gaussian(self.xstd, self.ystd, 0)
+        gaus_2d = self.dct_gaussian(self.xstd, self.ystd, self.high_img.shape)
+        self.conved = idct(idct(dct(dct(self.high_img, axis=0, norm = 'ortho'), axis=1, norm='ortho') * gaus_2d, \
+                                                       axis=1, norm = 'ortho'), axis=0, norm='ortho')
+        #self.conved = signal.fftconvolve(self.high_img, ker, mode='same')
 
         l_mask = (~self.low_img.mask) & (self.qa<self.qa_thresh)
         h_mask =  ~self.bad_pixs[self.Hx, self.Hy]
         self.lh_mask = l_mask & h_mask
 
+    def dct_gaussian(self, xstd, ystd, shape):
+        win_x, win_y = shape
+        xgaus  = np.exp(-2.*(np.pi**2)*(xstd**2)*((0.5 * np.arange(win_x) /win_x)**2))
+        ygaus  = np.exp(-2.*(np.pi**2)*(ystd**2)*((0.5 * np.arange(win_y) /win_y)**2))
+        gaus_2d = np.outer(xgaus, ygaus)
+        return gaus_2d
+
     def gaussian(self, xstd, ystd, angle, norm = True):
+        
         win = 2*int(round(max(1.96*xstd, 1.96*ystd)))
         winx = int(round(win*(2**0.5)))
         winy = int(round(win*(2**0.5)))
@@ -85,7 +97,11 @@ class psf_optimize(object):
         # cost for a final psf optimization
         xstd,ystd,angle, xs, ys = para 
         ker = self.gaussian(xstd,ystd,angle,True)                              
+        #gaus_2d = self.gaussian(xstd, ystd, self.high_img.shape)
         conved = signal.fftconvolve(self.high_img, ker, mode='same')
+        #conved = idct(idct(dct(dct(img, axis=0, norm = 'ortho'), axis=1, norm='ortho') * gaus_2d, \
+        #                                axis=1, norm = 'ortho'), axis=0, norm='ortho')
+
         # mask bad pixels
         cos = self.cost(xs=xs, ys=ys, conved=conved)
         return cos
@@ -129,7 +145,7 @@ class psf_optimize(object):
         self.paras, self.costs = np.array([i[0] for i in self.shift_solved]), \
                                            np.array([i[1] for i in self.shift_solved])
 
-        xs, ys = self.paras[self.costs==self.costs.min()][0].astype(int)
+        xs, ys = self.paras[self.costs==np.nanmin(self.costs)][0].astype(int)
         if self.costs.min() == 100000000000.:
             xs, ys = 0, 0
         #print 'Best shift is ', xs, ys, 'with the correlation of', 1-self.costs.min()

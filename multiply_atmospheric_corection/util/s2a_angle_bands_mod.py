@@ -830,15 +830,32 @@ def s2a_angle(XML_File, subsamp=10):
             except OSError as e:
                 if e.errno != errno.EEXIST:
                     raise
-            Out_File = directory + 'VAA_VZA_'+ bandName + '.img'
-            driver = gdal.GetDriverByName("ENVI")
-            hfile = driver.Create(Out_File, int(out_rows), int(out_cols), 2, gdal.GDT_Int16)
-            hfile.GetRasterBand(1).WriteArray(azimuth, 0, 0)
-            hfile.GetRasterBand(2).WriteArray(zenith, 0, 0)
-            hfile = None
-            tmphdr = Dir + '/angles/VAA_VZA_'+ bandName + '.hdr' 
-            os.remove(tmphdr)
-            Hdr_File = WriteHeader( Out_File, out_rows, out_cols, AngleObs['ul_x'], AngleObs['ul_y'], gsd[band]*subsamp, AngleObs['zone'], AngleObs['hemis'] )
+            g                = gdal.Open(Dir + '/B04.jp2') 
+            geo              = g.GetGeoTransform()                      
+            projection       = g.GetProjection()                        
+            geotransform     = (geo[0], gsd[band]*subsamp, geo[2], geo[3], geo[4], -gsd[band]*subsamp)
+            outputFileName   = Dir + '/angles/VAA_VZA_%s.tif'%bandName   
+            if os.path.exists(outputFileName):                          
+                os.remove(outputFileName)                               
+            dst_ds = gdal.GetDriverByName('GTiff').Create(outputFileName, int(out_rows), int(out_cols), 2, gdal.GDT_Int16, options=["TILED=YES", "COMPRESS=DEFLATE"])
+            dst_ds.SetGeoTransform(geotransform)                        
+            dst_ds.SetProjection(projection)                            
+            dst_ds.GetRasterBand(1).WriteArray(azimuth)
+            dst_ds.GetRasterBand(2).WriteArray(zenith)
+            dst_ds.FlushCache()                                         
+            dst_ds, g = None, None 
+
+            #Out_File = directory + 'VAA_VZA_'+ bandName + '.img'
+            #driver = gdal.GetDriverByName("ENVI")
+            #hfile = driver.Create(Out_File, int(out_rows), int(out_cols), 2, gdal.GDT_Int16)
+            #hfile.GetRasterBand(1).WriteArray(azimuth, 0, 0)
+            #hfile.GetRasterBand(2).WriteArray(zenith, 0, 0)
+            #hfile = None
+            #tmphdr = Dir + '/angles/VAA_VZA_'+ bandName + '.hdr' 
+            #os.remove(tmphdr)
+            #Hdr_File = WriteHeader( Out_File, out_rows, out_cols, AngleObs['ul_x'], AngleObs['ul_y'], gsd[band]*subsamp, AngleObs['zone'], AngleObs['hemis'] )
+            #gdal.Translate(Out_File.replace('.img', '.tif'), Out_File, creationOptions = ['COMPRESS=LZW', 'TILED=YES']).FlushCache()
+            #os.remove(Out_File); os.remove(Out_File+'.hdr')
         par = partial(loop, AngleObs=AngleObs, gsd=gsd, subsamp = subsamp, BandFoot=BandFoot, Orbit = Orbit,\
                       XML_File = XML_File, sul_lat=sul_lat, sul_lon = sul_lon, slr_lat = slr_lat,slr_lon = slr_lon)
         parmap(par, TimeParms)

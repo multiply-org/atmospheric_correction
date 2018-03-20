@@ -177,22 +177,25 @@ def MCD43_SurRef(MCD43_dir, example_file, year, doy, ang_files, sun_view_ang_sca
     #print 'get angles...'
     sa_files, va_files = ang_files
     if isinstance(va_files[0], str):
-        f   = lambda ang_file: reproject_data(ang_file, gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float64).data
+        f   = lambda ang_file: reproject_data(ang_file, gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float64, resample = gdal.GRIORA_NearestNeighbour).data
         vas = np.array(parmap(f, va_files))
     elif isinstance(va_files[0], (np.ndarray, np.generic) ):
-        f   = lambda array: reproject_data(array_to_raster(array, example_file), gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float64).data
+        f   = lambda array: reproject_data(array_to_raster(array, example_file), gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float64, resample = gdal.GRIORA_NearestNeighbour).data
         vas =  np.array(parmap(f, list(va_files)))
     vas = vas * sun_view_ang_scale[1]
     if isinstance(sa_files[0], str):
-        f   = lambda ang_file: reproject_data(ang_file, gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float64).data
+        f   = lambda ang_file: reproject_data(ang_file, gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float64, resample = gdal.GRIORA_Bilinear).data
         sas = np.array(parmap(f, sa_files)) 
     elif isinstance(sa_files[0], (np.ndarray, np.generic) ):
-        f   = lambda array: reproject_data(array_to_raster(array, example_file), gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float32).data
+        f   = lambda array: reproject_data(array_to_raster(array, example_file), gdal.BuildVRT('', list(fnames[0,0])), outputType = gdal.GDT_Float32, resample = gdal.GRIORA_Bilinear).data
         sas =  np.array(parmap(f, list(sa_files)))
+        
     if sas.shape[0] == 2:
         sas = np.repeat((sas * sun_view_ang_scale[0])[None, ...], len(bands), axis = 0)
     elif sas.shape[0] == len(bands):
         sas = sas * sun_view_ang_scale[0]
+    elif (sas.shape[0] ==1) & (sas.ndim==4):
+        sas = np.repeat((sas * sun_view_ang_scale[0]), len(bands), axis = 0)
     else:
         raise IOError('Wrong shape of sun angles are given.')
     raa     = vas[:, 0, :, :] - sas[:, 0, :, :]
@@ -201,12 +204,13 @@ def MCD43_SurRef(MCD43_dir, example_file, year, doy, ang_files, sun_view_ang_sca
     k_vol   = kk.Ross
     k_geo   = kk.Li
     sur_ref = (dat[0] + dat[1]*k_vol + dat[2]*k_geo)*0.001
-    wei     = 0.05 / wei
+    wei     = 0.015 / wei
     #print wei
     unc     = np.sqrt(wei[0, :, :]**2 + (wei[1, :, :]**2)*k_vol**2 + (wei[2, :, :]**2)*k_geo**2)
     #unc     = np.sqrt((np.sqrt(std[:, 0, :]**2 + (std[:, 1, :]**2)*k_vol**2 + (std[:, 2, :]**2)*k_geo**2) * 0.001)**2 + \
     #                  (np.sqrt(wei[0, :, :]**2 + (wei[1, :, :]**2)*k_vol**2 + (wei[2, :, :]**2)*k_geo**2))**2) 
     unc     = np.minimum(unc, 0.1)
+    unc     = np.maximum(unc, 0.015)
     #print unc
     if reproject:
         f_dat   = np.repeat(temp_data[None, ...], len(bands), axis=0).astype(float)
@@ -223,9 +227,10 @@ def MCD43_SurRef(MCD43_dir, example_file, year, doy, ang_files, sun_view_ang_sca
         unc_dat[unc_dat==0] = 0.1
         return f_dat, unc_dat
     else:
-        lx, ly                = np.where(temp_data)
-        sur_ref[sur_ref.mask] = np.nan
-        unc[unc.mask]         = 0.1
+        lx, ly                  = np.where(temp_data)
+        sur_ref[sur_ref.mask]   = np.nan
+        unc[unc.mask]           = 0.1
+        unc.data[unc.data == 0] = 0.1
         return sur_ref.data[:,hmask], unc.data[:,hmask], hx, hy, lx[hmask], ly[hmask], fnames[16,0]
 
 if __name__ == '__main__':

@@ -2,9 +2,9 @@
 
 from setuptools import setup
 
-setup(name='multiply-prior-engine',
-      version='0.1',
-      description='MULTIPLY Prior Engine',
-      author='MULTIPLY Team',
-      packages=['multiply_prior_engine'],
+setup(name='atmospheric_correction',
+      version='2.0',
+      description='Atmospheric correction for Sentinel 2 and Landsat 8',
+      author='Feng Yin',
+      packages=['atmospheric_correction'],
      )
