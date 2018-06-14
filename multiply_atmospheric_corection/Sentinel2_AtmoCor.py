@@ -15,6 +15,7 @@ parser.add_argument("-e", "--emulator_dir",   help="Directory where you store em
 parser.add_argument("-d", "--dem",            help="A global dem file, and a vrt file is recommonded.", default=root + '/eles/global_dem.vrt')
 parser.add_argument("-w", "--wv_emulator",    help="A water vapour restrieval emulator.",               default=root + '/emus/wv_MSI_retrieval_S2A.pkl')
 parser.add_argument("-c", "--cams",           help="Directory where you store cams data.",              default=root + '/cams/')
+parser.add_argument("-cf", "--cams_file",     help="Absolute path to a  cams file to use",              default='')
 parser.add_argument("-s", "--satellite",      help="Data from which Satellite is used: S2A or S2B",     default='S2A')
 parser.add_argument("--version",              action="version",                                         version='%(prog)s - Version 2.0')
 
@@ -38,9 +39,13 @@ with open(file_path +'/tileInfo.json', 'rb') as f:
 if len(glob(args.emulator_dir + '/*%s.pkl'%args.satellite)) < 3:
     down_s2_emus(args.emulator_dir, args.satellite)
 
-cams_file = '%04d-%02d-%02d.nc'%(year, month, day)
-if len(glob(os.path.join(args.cams, cams_file))) == 0:
-    down_cams(args.cams, cams_file)
+expected_cams_file = '%04d-%02d-%02d.nc'%(year, month, day)
+if args.cams_file.endswith(expected_cams_file) and os.path.exists(args.cams_file):
+    cams_file = args.cams_file
+else:
+    if len(glob(os.path.join(args.cams, expected_cams_file))) == 0:
+        down_cams(args.cams, cams_file)
+    cams_file = os.path.join(args.cams, expected_cams_file)
 
 example_file = os.path.join(args.file_path, 'B04.jp2')
 dem_dir = '/'.join(args.dem.split('/')[:-1])
@@ -54,6 +59,7 @@ aero = solve_aerosol(year, month, day, \
                      emus_dir    = args.emulator_dir, \
                      global_dem  = args.dem,\
                      wv_emus_dir = args.wv_emulator, \
+                     cams_file   = cams_file,\
                      cams_dir    = args.cams,\
                      s2_tile     = s2_tile, \
                      acquisition = acquisition,

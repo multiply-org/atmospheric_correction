@@ -44,6 +44,7 @@ class solve_aerosol(object):
                  s2_toa_dir  = '/home/ucfafyi/DATA/S2_MODIS/s_data/',
                  global_dem  = '/home/ucfafyi/DATA/Multiply/eles/global_dem.vrt',
                  wv_emus_dir = '/home/ucfafyi/DATA/Multiply/emus/wv_MSI_retrieval_S2A.pkl',
+                 cams_file   = '',
                  cams_dir    = '/home/ucfafyi/DATA/Multiply/cams/',
                  mod08_dir   = '/home/ucfafyi/DATA/Multiply/mod08/',
                  satellite   = 'S2A',
@@ -65,8 +66,9 @@ class solve_aerosol(object):
         self.s2_toa_dir  = s2_toa_dir
         self.global_dem  = global_dem
         self.wv_emus_dir = wv_emus_dir
+        self.cams_file    = cams_file
         self.cams_dir    = cams_dir
-        self.mod08_dir   = mod08_dir 
+        self.mod08_dir   = mod08_dir
         self.satellite   = satellite
         self.s2_tile     = s2_tile
         self.acquisition = acquisition
@@ -466,7 +468,10 @@ class solve_aerosol(object):
         proj       = sr.ExportToWkt()
         results = []
         for i, para in enumerate(parameters):
-            fname   = template%(self.cams_dir + '/' + netcdf_file, para)
+            if self.cams_file != '':
+                fname   = template%(self.cams_file, para)
+            else:
+                fname   = template%(self.cams_dir + '/' + netcdf_file, para)
             g       = gdal.Open(fname)
             g.SetProjection(proj)
             sub     = g.GetRasterBand(int(ind+1))
