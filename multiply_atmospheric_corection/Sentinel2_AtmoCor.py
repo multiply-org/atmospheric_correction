@@ -44,7 +44,7 @@ if args.cams_file.endswith(expected_cams_file) and os.path.exists(args.cams_file
     cams_file = args.cams_file
 else:
     if len(glob(os.path.join(args.cams, expected_cams_file))) == 0:
-        down_cams(args.cams, cams_file)
+        down_cams(args.cams, expected_cams_file)
     cams_file = os.path.join(args.cams, expected_cams_file)
 
 example_file = os.path.join(args.file_path, 'B04.jp2')
