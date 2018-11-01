@@ -18,30 +18,6 @@ home = expanduser("~")
 file_path = os.path.dirname(os.path.realpath(__file__))
 logger = create_logger()
 
-
-if os.path.exists(file_path + '/data/.earthdata_auth'):
-    try:
-        username, password = np.loadtxt(file_path + '/data/.earthdata_auth', dtype=str)
-        auth = tuple([username, password])
-    except:
-        logger.error('Please provide NASA Earthdata username and password for downloading MCD43 data, which can be applied here: https://urs.earthdata.nasa.gov.')
-        username = input('Username for NASA Earthdata: ')
-        password = getpass.getpass('Password for NASA Earthdata: ')
-        up = username, password                              
-        os.remove(file_path + '/data/.earthdata_auth')
-        with open(file_path + '/data/.earthdata_auth', 'wb') as f:     
-            for i in up:                                     
-                f.write((i + '\n').encode())
-        auth = tuple([username, password])
-else:
-    username = input('Username for NASA Earthdata: ')
-    password = getpass.getpass('Password for NASA Earthdata: ')
-    up = username, password
-    with open(home + '/.earthdata_auth', 'wb') as f:
-        for i in up: 
-            f.write((i + '\n').encode())
-    auth = tuple([username, password])
-
 #print(file_path + '/data/.earthdata_auth')
 #print(auth)
 
@@ -76,6 +52,28 @@ def get_one_tile(tile_date):
     return base + date + '/' + fname[0]
 
 def downloader(url_fname):
+    if os.path.exists(file_path + '/data/.earthdata_auth'):
+        try:
+            username, password = np.loadtxt(file_path + '/data/.earthdata_auth', dtype=str)
+            auth = tuple([username, password])
+        except:
+            logger.error('Please provide NASA Earthdata username and password for downloading MCD43 data, which can be applied here: https://urs.earthdata.nasa.gov.')
+            username = input('Username for NASA Earthdata: ')
+            password = getpass.getpass('Password for NASA Earthdata: ')
+            up = username, password
+            os.remove(file_path + '/data/.earthdata_auth')
+            with open(file_path + '/data/.earthdata_auth', 'wb') as f:
+                for i in up:
+                    f.write((i + '\n').encode())
+            auth = tuple([username, password])
+    else:
+        username = input('Username for NASA Earthdata: ')
+        password = getpass.getpass('Password for NASA Earthdata: ')
+        up = username, password
+        with open(home + '/.earthdata_auth', 'wb') as f:
+            for i in up:
+                f.write((i + '\n').encode())
+        auth = tuple([username, password])
     url, fname = url_fname
     with requests.Session() as s:
         s.max_redirects = 100000
@@ -156,7 +154,3 @@ if __name__ == '__main__':
     aoi = '/home/ucfafyi/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/aot.tif'
     obs_time = datetime(2017, 7, 8, 10, 8, 20)
     ret = get_mcd43(aoi, obs_time, mcd43_dir = '/home/ucfafyi/hep/MCD43/', vrt_dir = '/home/ucfafyi/DATA/Multiply/MCD43/')
-
-
-
-
