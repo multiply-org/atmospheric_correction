@@ -1,5 +1,5 @@
+import argparse
 import os
-import sys
 import requests
 import numpy as np
 from glob import glob
@@ -10,14 +10,20 @@ from SIAC.the_correction import atmospheric_correction
 from SIAC.s2_preprocessing import s2_pre_processing
 from SIAC.downloaders import downloader
 from SIAC.multi_process import parmap
+from SIAC.create_logger import create_logger
 from os.path import expanduser
 home = expanduser("~")
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-def SIAC_S2(s2_t, send_back = False, mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', aoi = None):
-    if not os.path.exists(file_path + '/emus/'):
-        os.mkdir(file_path + '/emus/')
-    if len(glob(file_path + '/emus/' + 'isotropic_MSI_emulators_*_x?p_S2?.pkl')) < 12:
+logger = create_logger()
+
+def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/', emu_dir = file_path + '/emus/',
+            vrt_dir = home + '/MCD43_VRT/', aoi = None):
+    logger.info('Starting SIAC')
+    if not os.path.exists(emu_dir):
+        emu_dir = file_path + '/emus/'
+        os.mkdir(emu_dir)
+    if len(glob(emu_dir + '/' + 'isotropic_MSI_emulators_*_x?p_S2?.pkl')) < 12:
         url = 'http://www2.geog.ucl.ac.uk/~ucfafyi/emus/'
         req = requests.get(url)
         to_down = []
@@ -26,12 +32,12 @@ def SIAC_S2(s2_t, send_back = False, mcd43 = home + '/MCD43/', vrt_dir = home + 
                 fname   = line.split('"')[1].split('<')[0]
                 if 'MSI' in fname:
                     to_down.append([fname, url])
-        f = lambda fname_url: downloader(fname_url[0], fname_url[1], file_path + '/emus/')
+        f = lambda fname_url: downloader(fname_url[0], fname_url[1], emu_dir)
         parmap(f, to_down)
     rets = s2_pre_processing(s2_t)
     aero_atmos = []
     for ret in rets:
-        ret += (mcd43, vrt_dir, aoi)
+        ret += (dem_vrt, cams_dir, mcd43, vrt_dir, aoi)
         #sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile = ret
         aero_atmo = do_correction(*ret)
         if send_back:
@@ -39,8 +45,8 @@ def SIAC_S2(s2_t, send_back = False, mcd43 = home + '/MCD43/', vrt_dir = home + 
     if send_back:
         return aero_atmos
 
-def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, \
-                  cloud_mask, metafile, mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', aoi=None):
+def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile,
+                  dem_vrt, cams_dir, mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', aoi=None):
 
     if os.path.realpath(mcd43) in os.path.realpath(home + '/MCD43/'):
         if not os.path.exists(home + '/MCD43/'):
@@ -70,7 +76,8 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, \
     sun_angles  = sun_ang_name
     aero = solve_aerosol(sensor_sat,toa_bands,band_wv, band_index,view_angles,\
                          sun_angles,obs_time,cloud_mask, gamma=10., spec_m_dir= \
-                         file_path+'/spectral_mapping/', emus_dir=file_path+'/emus/', mcd43_dir=vrt_dir, aoi=aoi)
+                         file_path+'/spectral_mapping/', emus_dir=file_path+'/emus/', mcd43_dir=vrt_dir, aoi=aoi,
+                         global_dem=dem_vrt, cams_dir=cams_dir)
     aero._solving()
     toa_bands  = toa_refs
     view_angles = view_ang_names
@@ -90,3 +97,13 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, \
     atmo._doing_correction()
     return aero, atmo
 
+parser = argparse.ArgumentParser(description='Sentinel 2 Atmospheric Correction Excutable')
+parser.add_argument('-f', "--file_path",      help='Sentinel 2 file path in the form of AWS', required=True)
+parser.add_argument("-m", "--MCD43_file_dir", help="Directory where you store MCD43A1.006 data")
+parser.add_argument("-e", "--emulator_dir",   help="Directory where you store emulators.")
+parser.add_argument("-d", "--dem",            help="A global dem file, and a vrt file is recommended.")
+# parser.add_argument("-w", "--wv_emulator",    help="A water vapour restrieval emulator.")
+parser.add_argument("-c", "--cams",           help="Directory where you store cams data.")
+parser.add_argument("-a", "--aoi",            help="Area of Interest.")
+args = parser.parse_args()
+SIAC_S2(s2_t=args.file_path, dem_vrt=args.dem, cams_dir=args.cams, mcd43=args.MCD43_file_dir, emu_dir=args.emulator_dir, aoi=args.aoi)
