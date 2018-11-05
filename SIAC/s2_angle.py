@@ -266,6 +266,7 @@ def resample_s2_angles(metafile):
     vaa, vza = parse_xml(metafile, example_file, sun_ang_name)
     view_ang_name_gmls = zip(toa_refs, view_ang_names, gmls)
     band_dict = dict(zip(bands, range(13)))
+    logger.info('getting angles from {} processes'.format(procs))
     par = partial(get_angle, vaa=vaa, vza=vza, band_dict=band_dict)
     p = Pool(procs)
     ret = p.map(par,  view_ang_name_gmls)
