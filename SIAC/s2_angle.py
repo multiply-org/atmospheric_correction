@@ -12,6 +12,18 @@ from functools import partial
 from multiprocessing import Pool
 import xml.etree.ElementTree as ET
 #from scipy.interpolate import griddata
+from SIAC.create_logger import create_logger
+'''
+logger = logging.getLogger('SIAC')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+'''
+logger = create_logger()
 
 def parse_xml(meta_file, example_file, sun_ang_name):
     tree = ET.parse(meta_file)
@@ -83,6 +95,7 @@ def parse_xml(meta_file, example_file, sun_ang_name):
 
 def get_angle(view_ang_name_gml, vaa, vza, band_dict):
     band_name, view_ang_name, gml = view_ang_name_gml
+    logger.info('getting angle {}' % (view_ang_name_gml))
     g = ogr.Open(gml)
     xRes = 10; yRes=10
     g1     = gdal.Open(band_name)
