@@ -49,7 +49,7 @@ def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/'
     rets = s2_pre_processing(s2_t)
     aero_atmos = []
     for ret in rets:
-        ret += (dem_vrt, cams_dir, mcd43, vrt_dir, download_mcd43, aoi)
+        ret += (dem_vrt, cams_dir, emu_dir, mcd43, vrt_dir, download_mcd43, aoi)
         #sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile = ret
         aero_atmo = do_correction(*ret)
         if send_back:
@@ -58,7 +58,7 @@ def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/'
         return aero_atmos
 
 def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile, dem_vrt, cams_dir,
-                  mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', download_mcd_43 = True, aoi=None):
+                  emus_dir, mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', download_mcd_43 = True, aoi=None):
 
     if os.path.realpath(mcd43) in os.path.realpath(home + '/MCD43/'):
         if not os.path.exists(home + '/MCD43/'):
@@ -88,7 +88,7 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
     sun_angles  = sun_ang_name
     aero = solve_aerosol(sensor_sat,toa_bands,band_wv, band_index,view_angles,\
                          sun_angles,obs_time,cloud_mask, gamma=10., spec_m_dir= \
-                         file_path+'/spectral_mapping/', emus_dir=file_path+'/emus/', mcd43_dir=vrt_dir, aoi=aoi,
+                         file_path+'/spectral_mapping/', emus_dir=emus_dir, mcd43_dir=vrt_dir, aoi=aoi,
                          global_dem=dem_vrt, cams_dir=cams_dir)
     aero._solving()
     toa_bands  = toa_refs
