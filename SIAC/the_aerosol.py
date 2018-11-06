@@ -668,7 +668,7 @@ class solve_aerosol(object):
         self._resamplers()
         self.logger.info('Parsing angles.')
         self._parse_angles()
-        self.logger.info('Mask bad pixeles.')
+        self.logger.info('Mask bad pixels.')
         self._mask_bad_pix()
         self.logger.info('Get simulated BOA.')
         self._get_boa()
