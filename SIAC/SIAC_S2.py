@@ -65,8 +65,8 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
                 obs_time = datetime.strptime(sensing_time, u'%Y-%m-%dT%H:%M:%S.%fZ')
             if 'TILE_ID' in i:
                 sat = i.split('</')[0].split('>')[-1].split('_')[0]
-    
-    get_mcd43(toa_refs[0], obs_time, mcd43_dir = mcd43, vrt_dir = vrt_dir)
+
+    # get_mcd43(toa_refs[0], obs_time, mcd43_dir = mcd43, vrt_dir = vrt_dir)
     #get_mcd43(toa_refs[0], obs_time, mcd43_dir = '/home/ucfafyi/hep/MCD43/', vrt_dir = '/home/ucfafyi/DATA/Multiply/MCD43/')
     sensor_sat = 'MSI', sat
     band_index  = [1,2,3,7,11,12]
