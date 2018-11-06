@@ -95,7 +95,7 @@ def parse_xml(meta_file, example_file, sun_ang_name):
 
 def get_angle(view_ang_name_gml, vaa, vza, band_dict):
     band_name, view_ang_name, gml = view_ang_name_gml
-    logger.info('getting angle {}' % (view_ang_name_gml))
+    logger.info('getting angle for {}, {}, and {}'.format(band_name, view_ang_name, gml))
     g = ogr.Open(gml)
     xRes = 10; yRes=10
     g1     = gdal.Open(band_name)
@@ -267,15 +267,14 @@ def resample_s2_angles(metafile):
     view_ang_name_gmls = zip(toa_refs, view_ang_names, gmls)
     band_dict = dict(zip(bands, range(13)))
     logger.info('getting angles from {} processes'.format(procs))
-    par = partial(get_angle, vaa=vaa, vza=vza, band_dict=band_dict)
-    p = Pool(procs)
-    ret = p.map(par,  view_ang_name_gmls)
-    p.close()
-    p.join()
-    ret = np.array(ret)
     view_ang_names = np.array(view_ang_names)
-    bad_angs       = view_ang_names[~ret]
-    src_files      = view_ang_names[ret][abs(np.arange(13)[~ret][...,None] - np.arange(13)[ret]).argmin(axis=1)]
+    ret = [True] * 13
+    for i, view_ang_name_gml in enumerate(view_ang_name_gmls):
+        got_angle = get_angle(view_ang_name_gml, vaa, vza, band_dict)
+        ret[i] = got_angle
+    inv_ret = [not i for i in ret]
+    bad_angs       = view_ang_names[inv_ret]
+    src_files      = view_ang_names[ret][abs(np.arange(13)[inv_ret][...,None] - np.arange(13)[ret]).argmin(axis=1)]
     for i in range(len(bad_angs)):
         copyfile(src_files[i], bad_angs[i])
     return sun_ang_name, view_ang_names, toa_refs, cloud_name
