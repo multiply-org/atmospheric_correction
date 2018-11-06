@@ -3,7 +3,7 @@ import os
 import requests
 import numpy as np
 from glob import glob
-from SIAC.get_MCD43 import get_mcd43
+from SIAC.get_MCD43 import get_mcd43, get_locaL_MCD43
 from datetime import datetime
 from SIAC.the_aerosol import solve_aerosol
 from SIAC.the_correction import atmospheric_correction
@@ -17,9 +17,20 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 
 logger = create_logger()
 
+
+def _ensure_dir_format(dir: str):
+    if not dir.endswith('/'):
+        dir += '/'
+    return dir
+
+
 def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/', emu_dir = file_path + '/emus/',
-            vrt_dir = home + '/MCD43_VRT/', aoi = None):
+            vrt_dir = home + '/MCD43_VRT/', download_mcd43 = 'True', aoi = None):
     logger.info('Starting SIAC')
+    cams_dir = _ensure_dir_format(cams_dir)
+    mcd43 = _ensure_dir_format(mcd43)
+    emu_dir = _ensure_dir_format(emu_dir)
+    vrt_dir = _ensure_dir_format(vrt_dir)
     if not os.path.exists(emu_dir):
         emu_dir = file_path + '/emus/'
         os.mkdir(emu_dir)
@@ -34,10 +45,11 @@ def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/'
                     to_down.append([fname, url])
         f = lambda fname_url: downloader(fname_url[0], fname_url[1], emu_dir)
         parmap(f, to_down)
+    download_mcd43 = download_mcd43 == 'True'
     rets = s2_pre_processing(s2_t)
     aero_atmos = []
     for ret in rets:
-        ret += (dem_vrt, cams_dir, mcd43, vrt_dir, aoi)
+        ret += (dem_vrt, cams_dir, mcd43, vrt_dir, download_mcd43, aoi)
         #sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile = ret
         aero_atmo = do_correction(*ret)
         if send_back:
@@ -45,8 +57,8 @@ def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/'
     if send_back:
         return aero_atmos
 
-def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile,
-                  dem_vrt, cams_dir, mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', aoi=None):
+def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile, dem_vrt, cams_dir,
+                  mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', download_mcd_43 = True, aoi=None):
 
     if os.path.realpath(mcd43) in os.path.realpath(home + '/MCD43/'):
         if not os.path.exists(home + '/MCD43/'):
@@ -56,7 +68,6 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
         if not os.path.exists(home + '/MCD43_VRT/'):
             os.mkdir(home + '/MCD43_VRT/')
 
-    base = os.path.dirname(toa_refs[0])
     base = toa_refs[0].replace('B01.jp2', '')
     with open(metafile) as f:
         for i in f.readlines():
@@ -65,9 +76,10 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
                 obs_time = datetime.strptime(sensing_time, u'%Y-%m-%dT%H:%M:%S.%fZ')
             if 'TILE_ID' in i:
                 sat = i.split('</')[0].split('>')[-1].split('_')[0]
-
-    # get_mcd43(toa_refs[0], obs_time, mcd43_dir = mcd43, vrt_dir = vrt_dir)
-    #get_mcd43(toa_refs[0], obs_time, mcd43_dir = '/home/ucfafyi/hep/MCD43/', vrt_dir = '/home/ucfafyi/DATA/Multiply/MCD43/')
+    if download_mcd_43:
+        get_mcd43(toa_refs[0], obs_time, mcd43_dir = mcd43, vrt_dir = vrt_dir)
+    else:
+        get_locaL_MCD43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
     sensor_sat = 'MSI', sat
     band_index  = [1,2,3,7,11,12]
     band_wv    = [469, 555, 645, 859, 1640, 2130]
@@ -102,8 +114,9 @@ parser.add_argument('-f', "--file_path",      help='Sentinel 2 file path in the 
 parser.add_argument("-m", "--MCD43_file_dir", help="Directory where you store MCD43A1.006 data")
 parser.add_argument("-e", "--emulator_dir",   help="Directory where you store emulators.")
 parser.add_argument("-d", "--dem",            help="A global dem file, and a vrt file is recommended.")
-# parser.add_argument("-w", "--wv_emulator",    help="A water vapour restrieval emulator.")
+parser.add_argument("-o", "--download",       help="Whether to download MCD 43 Data.")
 parser.add_argument("-c", "--cams",           help="Directory where you store cams data.")
 parser.add_argument("-a", "--aoi",            help="Area of Interest.")
 args = parser.parse_args()
-SIAC_S2(s2_t=args.file_path, dem_vrt=args.dem, cams_dir=args.cams, mcd43=args.MCD43_file_dir, emu_dir=args.emulator_dir, aoi=args.aoi)
+SIAC_S2(s2_t=args.file_path, dem_vrt=args.dem, cams_dir=args.cams, mcd43=args.MCD43_file_dir,
+        vrt_dir=args.MCD43_file_dir, download_mcd43=args.download, emu_dir=args.emulator_dir, aoi=args.aoi)

@@ -21,6 +21,26 @@ logger = create_logger()
 #print(file_path + '/data/.earthdata_auth')
 #print(auth)
 
+
+def find_local_files(aoi, obs_time, temporal_window = 16):
+    days = [(obs_time - timedelta(days = int(i))).timetuple() for i in np.arange(temporal_window, 0, -1)] + \
+            [(obs_time + timedelta(days = int(i))).timetuple() for i in np.arange(0, temporal_window+1,  1)]
+    try:
+        tiles = get_vector_hv(aoi)
+    except:
+        try:
+            tiles = get_raster_hv(aoi)
+        except:
+            raise IOError('AOI has to be raster or vector object/files.')
+    mcd43_file_pattern = 'MCD43A1.A{}{:03}.{}.006.*.hdf'
+    expected_files = []
+    for day in days:
+        for tile in tiles:
+            expected_files.append(mcd43_file_pattern.format(day.tm_year, day.tm_yday, tile))
+    return expected_files
+
+
+
 def find_files(aoi, obs_time, temporal_window = 16):
     days   = [(obs_time - timedelta(days = int(i))).strftime('%Y.%m.%d') for i in np.arange(temporal_window, 0, -1)] + \
              [(obs_time + timedelta(days = int(i))).strftime('%Y.%m.%d') for i in np.arange(0, temporal_window+1,  1)]
@@ -38,6 +58,7 @@ def find_files(aoi, obs_time, temporal_window = 16):
     p.join()
     return ret
 
+
 def get_one_tile(tile_date):
     base = 'https://e4ftl01.cr.usgs.gov/MOTA/MCD43A1.006/'
     tile, date = tile_date
@@ -50,6 +71,7 @@ def get_one_tile(tile_date):
             #print(base + date)
             time.sleep(1)
     return base + date + '/' + fname[0]
+
 
 def downloader(url_fname):
     if os.path.exists(file_path + '/data/.earthdata_auth'):
@@ -101,7 +123,8 @@ def downloader(url_fname):
                     raise IOError('Failed to download the whole file.')
         else:
             print(r.content)
-        
+
+
 def daily_vrt(fnames_date, vrt_dir = None):
     temp1 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:BRDF_Albedo_Band_Mandatory_Quality_%s'
     temp2 = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_BRDF:BRDF_Albedo_Parameters_%s'
@@ -124,8 +147,28 @@ def daily_vrt(fnames_date, vrt_dir = None):
         for band in ['Band1','Band2','Band3','Band4','Band5','Band6','Band7', 'vis', 'nir', 'shortwave']:
             bs = []                                                                  
             for fname in all_files:                                                     
-                bs.append(temp%(fname, band))                                        
-            gdal.BuildVRT(date_dir + '_'.join(['MCD43', date, bs[0].split(':')[-1]])+'.vrt', bs).FlushCache()
+                bs.append(temp%(fname, band))
+            vrt_data_set = gdal.BuildVRT(date_dir + '_'.join(['MCD43', date, bs[0].split(':')[-1]])+'.vrt', bs)
+            if vrt_data_set is None:
+                logger.info('Could not create vrt')
+            else:
+                vrt_data_set.FlushCache()
+
+
+def get_locaL_MCD43(aoi, obs_time, mcd43_dir = './MCD43/', vrt_dir = './MCD43_VRT/'):
+    logger.propagate = False
+    expected_files = find_local_files(aoi, obs_time, 16)
+    files = []
+    for file in expected_files:
+        files.append(glob(mcd43_dir + '/' + file))
+    flist = np.array(files).flatten()
+    all_dates = np.array([i.split('/')[-1] .split('.')[1][1:9] for i in flist])
+    udates = np.unique(all_dates)
+    fnames_dates =  [[flist[all_dates==date].tolist(),date] for date in udates]
+    for fname_date in fnames_dates:
+        logger.info('Creating daily VRT...')
+        daily_vrt(fname_date, vrt_dir)
+
 
 def get_mcd43(aoi, obs_time, mcd43_dir = './MCD43/', vrt_dir = './MCD43_VRT/'):
     logger.propagate = False
@@ -144,10 +187,11 @@ def get_mcd43(aoi, obs_time, mcd43_dir = './MCD43/', vrt_dir = './MCD43_VRT/'):
     fnames_dates =  [[flist[all_dates==date].tolist(),date] for date in udates]
     logger.info('Creating daily VRT...')
     par = partial(daily_vrt, vrt_dir = vrt_dir)
-    p = Pool(len(fnames_dates)) 
+    p = Pool(len(fnames_dates))
     p.map(par, fnames_dates)
-    p.close()                           
+    p.close()
     p.join()
+
 
 if __name__ == '__main__':
     aoi = '/home/ucfafyi/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/AOI.json'
