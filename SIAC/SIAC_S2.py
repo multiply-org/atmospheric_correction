@@ -108,15 +108,15 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
                                   rgb, emus_dir=emus_dir, global_dem=dem_vrt, cams_dir=cams_dir)
     atmo._doing_correction()
     return aero, atmo
-
-parser = argparse.ArgumentParser(description='Sentinel 2 Atmospheric Correction Excutable')
-parser.add_argument('-f', "--file_path",      help='Sentinel 2 file path in the form of AWS', required=True)
-parser.add_argument("-m", "--MCD43_file_dir", help="Directory where you store MCD43A1.006 data")
-parser.add_argument("-e", "--emulator_dir",   help="Directory where you store emulators.")
-parser.add_argument("-d", "--dem",            help="A global dem file, and a vrt file is recommended.")
-parser.add_argument("-o", "--download",       help="Whether to download MCD 43 Data.")
-parser.add_argument("-c", "--cams",           help="Directory where you store cams data.")
-parser.add_argument("-a", "--aoi",            help="Area of Interest.")
-args = parser.parse_args()
-SIAC_S2(s2_t=args.file_path, dem_vrt=args.dem, cams_dir=args.cams, mcd43=args.MCD43_file_dir,
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Sentinel 2 Atmospheric Correction Excutable')
+    parser.add_argument('-f', "--file_path",      help='Sentinel 2 file path in the form of AWS', required=True)
+    parser.add_argument("-m", "--MCD43_file_dir", help="Directory where you store MCD43A1.006 data")
+    parser.add_argument("-e", "--emulator_dir",   help="Directory where you store emulators.")
+    parser.add_argument("-d", "--dem",            help="A global dem file, and a vrt file is recommended.")
+    parser.add_argument("-o", "--download",       help="Whether to download MCD 43 Data.")
+    parser.add_argument("-c", "--cams",           help="Directory where you store cams data.")
+    parser.add_argument("-a", "--aoi",            help="Area of Interest.")
+    args = parser.parse_args()
+    SIAC_S2(s2_t=args.file_path, dem_vrt=args.dem, cams_dir=args.cams, mcd43=args.MCD43_file_dir,
         vrt_dir=args.MCD43_file_dir, download_mcd43=args.download, emu_dir=args.emulator_dir, aoi=args.aoi)
