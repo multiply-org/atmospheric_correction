@@ -160,9 +160,11 @@ def get_local_MCD43(aoi, obs_time, mcd43_dir ='./MCD43/', vrt_dir ='./MCD43_VRT/
     expected_files = find_local_files(aoi, obs_time, 16)
     files = []
     for file in expected_files:
-        globbed_file = glob(mcd43_dir + '/' + file)
-        logger.info('globbed file: {}'.format(globbed_file))
-        files.append(globbed_file)
+        globbed_files = glob(mcd43_dir + '/' + file)
+        for globbed_file in globbed_files:
+            if len(globbed_file) > 0:
+                files.append(globbed_file)
+                logger.info('globbed file: {}'.format(globbed_file))
     flist = np.array(files).flatten()
     all_dates = np.array([i.split('/')[-1] .split('.')[1][1:9] for i in flist])
     udates = np.unique(all_dates)
