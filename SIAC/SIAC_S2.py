@@ -3,7 +3,7 @@ import os
 import requests
 import numpy as np
 from glob import glob
-from SIAC.get_MCD43 import get_mcd43, get_locaL_MCD43
+from SIAC.get_MCD43 import get_mcd43, get_local_MCD43
 from datetime import datetime
 from SIAC.the_aerosol import solve_aerosol
 from SIAC.the_correction import atmospheric_correction
@@ -79,7 +79,7 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
     if download_mcd_43:
         get_mcd43(toa_refs[0], obs_time, mcd43_dir = mcd43, vrt_dir = vrt_dir)
     else:
-        get_locaL_MCD43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
+        get_local_MCD43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
     sensor_sat = 'MSI', sat
     band_index  = [1,2,3,7,11,12]
     band_wv    = [469, 555, 645, 859, 1640, 2130]
