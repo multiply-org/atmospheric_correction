@@ -642,8 +642,11 @@ class solve_aerosol(object):
     
     def _fill_nan(self,):
         def fill_nan(array):                        
-            x_shp, y_shp = array.shape                     
-            mask  = ~np.isnan(array)                       
+            x_shp, y_shp = array.shape
+            logging.info('x_shp {}'.format(x_shp))
+            logging.info('y_shp {}'.format(y_shp))
+            logging.info('array {}'.format(array))
+            mask  = ~np.isnan(array)
             valid = np.array(np.where(mask)).T             
             value = array[mask]                            
             mesh  = np.repeat(range(x_shp), y_shp).reshape(x_shp, y_shp), \
