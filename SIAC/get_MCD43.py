@@ -164,13 +164,11 @@ def get_local_MCD43(aoi, obs_time, mcd43_dir ='./MCD43/', vrt_dir ='./MCD43_VRT/
         for globbed_file in globbed_files:
             if len(globbed_file) > 0:
                 files.append(globbed_file)
-                logger.info('globbed file: {}'.format(globbed_file))
     flist = np.array(files).flatten()
     all_dates = np.array([i.split('/')[-1] .split('.')[1][1:9] for i in flist])
     udates = np.unique(all_dates)
     fnames_dates =  [[flist[all_dates==date].tolist(),date] for date in udates]
     for fname_date in fnames_dates:
-        logger.info('Creating daily VRT...')
         daily_vrt(fname_date, vrt_dir)
 
 
