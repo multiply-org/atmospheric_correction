@@ -515,19 +515,19 @@ class atmospheric_correction(object):
         projection   = self._toa_bands[self.ri].GetProjectionRef()
         geotransform = self._toa_bands[self.ri].GetGeoTransform() 
         self._save_rgb(rgba_array, name, projection, geotransform)
-        gdal.Translate(self.toa_dir +'/TOA_overview.png', self.toa_dir+'/TOA_RGB.tif', \
-                       format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
-        gdal.Translate(self.toa_dir +'/TOA_ovr.png', self.toa_dir+'/TOA_RGB.tif', \
-                       format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir +'/TOA_overview.png', self.toa_dir+'/TOA_RGB.tif', \
+        #                format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir +'/TOA_ovr.png', self.toa_dir+'/TOA_RGB.tif', \
+        #                format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
 
         rgba_array = np.clip([self.boa_rgb[0] * self.rgb_scale * 255, self.boa_rgb[1] * self.rgb_scale * 255, \
                               self.boa_rgb[2] * self.rgb_scale * 255, alpha * self.rgb_scale * 255], 0, 255).astype(np.uint8)
         name = self.toa_dir + '/BOA_RGB.tif'
         self._save_rgb(rgba_array, name, projection, geotransform)
-        gdal.Translate(self.toa_dir+'/BOA_overview.png', self.toa_dir+'/BOA_RGB.tif', \
-                       format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
-        gdal.Translate(self.toa_dir+'/BOA_ovr.png', self.toa_dir+'/BOA_RGB.tif', \
-                       format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir+'/BOA_overview.png', self.toa_dir+'/BOA_RGB.tif', \
+        #                format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir+'/BOA_ovr.png', self.toa_dir+'/BOA_RGB.tif', \
+        #                format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
 
     def _doing_correction(self,):
         self.logger.propagate = False
