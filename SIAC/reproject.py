@@ -45,6 +45,11 @@ class reproject_data(object):
         self.xSize      = xSize
         self.ySize      = ySize
         self.resample   = resample
+        if self.srcNodata is None:
+            try:                           
+                self.srcNodata = ' '.join([i.split("=")[1] for i in gdal.Info(self.source_img).split('\n') if' NoData' in i])
+            except:                        
+                self.srcNodata = None
         if (self.target_img is None) & (self.dstSRS is None):
             raise IOError('Projection should be specified ether from a file or a projection code.')
         elif self.target_img is not None:
@@ -114,7 +119,7 @@ def array_to_raster(array, example_file):
 
 
 if __name__=='__main__':
-    ele = reproject_data('/home/ucfafyi/DATA/Multiply/eles/global_dem.vrt','/data/nemesis/S2_data/32/U/PU/2017/12/15/0/B02.jp2', outputType= gdal.GDT_Float32, ) 
+    ele = reproject_data('~/DATA/Multiply/eles/global_dem.vrt','/data/nemesis/S2_data/32/U/PU/2017/12/15/0/B02.jp2', outputType= gdal.GDT_Float32, ) 
     #ele.get_it()
     mask = (ele.data == -32768) | (~np.isfinite(ele.data))
     ele.data = ma.array(ele.data, mask = mask)
