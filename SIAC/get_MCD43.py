@@ -2,22 +2,20 @@ import os
 import time
 import gdal
 import getpass
-import logging
 import requests
 import numpy as np
 from glob import glob
 from six.moves import input
 from functools import partial
-from os.path import expanduser
 from multiprocessing import Pool
 from datetime import datetime, timedelta
-from SIAC.modis_tile_cal import get_vector_hv, get_raster_hv
 from os.path import expanduser
 from SIAC.create_logger import create_logger
 from SIAC.modis_tile_cal import get_vector_hv, get_raster_hv
 
 home = expanduser("~")
 file_path = os.path.dirname(os.path.realpath(__file__))
+logger = create_logger()
 test_url = 'https://e4ftl01.cr.usgs.gov/MOTA/MCD43A1.006/2000.02.24/MCD43A1.A2000055.h32v08.006.2016101152216.hdf.xml'
 
 def get_auth(logger):
