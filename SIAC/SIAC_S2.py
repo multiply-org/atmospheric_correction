@@ -80,25 +80,21 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
             if 'TILE_ID' in i:
                 sat = i.split('</')[0].split('>')[-1].split('_')[0]
                 tile = i.split('</')[0].split('>')[-1]
-            log_file = os.path.dirname(metafile) + '/SIAC_S2.log'
-            logger = create_logger(log_file)
-            logger.info('Starting atmospheric corretion for %s' % tile)
-            if not np.all(cloud_mask):
-                handlers = logger.handlers[:]
-                for handler in handlers:
-                    handler.close()
-                    logger.removeHandler(handler)
-                if download_mcd_43:
-                    get_mcd43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
-                else:
-                    get_local_MCD43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
-                # logger = create_logger(log_file)
-            else:
-                logger.info('No clean pixel in this scene and no MCD43 is downloaded.')
-                sat = i.split('</')[0].split('>')[-1].split('_')[0]
-    
-    get_mcd43(toa_refs[0], obs_time, mcd43_dir = mcd43, vrt_dir = vrt_dir, log_file = log_file)
-    #get_mcd43(toa_refs[0], obs_time, mcd43_dir = '/home/ucfafyi/hep/MCD43/', vrt_dir = '/home/ucfafyi/DATA/Multiply/MCD43/')
+    log_file = os.path.dirname(metafile) + '/SIAC_S2.log'
+    logger = create_logger(log_file)
+    logger.info('Starting atmospheric corretion for %s' % tile)
+    if not np.all(cloud_mask):
+        handlers = logger.handlers[:]
+        for handler in handlers:
+            handler.close()
+            logger.removeHandler(handler)
+        if download_mcd_43:
+            get_mcd43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir, log_file=log_file)
+        else:
+            get_local_MCD43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
+                    # logger = create_logger(log_file)
+    else:
+        logger.info('No clean pixel in this scene and no MCD43 is downloaded.')
     sensor_sat = 'MSI', sat
     band_index  = [1,2,3,7,11,12]
     band_wv    = [469, 555, 645, 859, 1640, 2130]
