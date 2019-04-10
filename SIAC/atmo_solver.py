@@ -12,7 +12,13 @@ except:
     import pickle as pkl
 from scipy import optimize, interpolate, sparse
 from scipy.sparse import linalg
+#from fastDiff import fastDiff
 from SIAC.multi_process import parmap
+
+#turn off multithreading
+#os.environ['OPENBLAS_NUM_THREADS'] = '1' 
+#os.environ['MKL_NUM_THREADS'] = '1'
+#os.environ['OMP_NUM_THREADS'] = '1'
 
 class bcolors:
     HEADER = '\033[95m'
@@ -68,8 +74,7 @@ class solving_atmo_paras(object):
                  gamma   = 0.5,
                  alpha   = -1.6,# from nasa modis climatology
                  subsample = 1,
-                 subsample_start = 0,
-                 log_file = None
+                 subsample_start = 0
                  ):
         
         self.boa             = boa
@@ -111,11 +116,6 @@ class solving_atmo_paras(object):
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
-        if log_file is not None:    
-            fh = logging.FileHandler(log_file)
-            fh.setLevel(logging.DEBUG)
-            fh.setFormatter(formatter)
-            self.logger.addHandler(fh)
         self.logger.propagate = False
         self.logger.info('MultiGrid solver in process...')
 
@@ -257,10 +257,6 @@ class solving_atmo_paras(object):
         self.tco3_prior, self.tco3_unc  = self._grid_conversion(self.tco3_prior, shape), self._grid_conversion(self.tco3_unc, shape)
         post_solved = np.array([self.aot_prior, self.tcwv_prior, self.tco3_prior]) 
         post_unc    = np.array([self.aot_unc,   self.tcwv_unc,   self.tco3_unc]) 
-        handlers = self.logger.handlers[:]
-        for handler in handlers:
-            handler.close()
-            self.logger.removeHandler(handler)
         return [post_solved, post_unc]
 
     def _helper(self, inp):
@@ -304,40 +300,20 @@ class solving_atmo_paras(object):
         
         if is_full:
             dJ = np.nansum(np.array(full_dJ), axis=(1,))
-            dJ    [np.isnan(dJ)]     = 0
-            full_J[np.isnan(full_J)] = 0
-            #J_ = np.zeros((2,) + self.full_res)
-            #J_[:, self.Hx, self.Hy] = dJ
-            #subs1 = [np.array_split(sub, self.num_blocks_y, axis=2) for sub in np.array_split(J_, self.num_blocks_x, axis=1)]
+            J_ = np.zeros((2,) + self.full_res)
+            J_[:, self.Hx, self.Hy] = dJ
+            subs1 = [np.array_split(sub, self.num_blocks_y, axis=2) for sub in np.array_split(J_, self.num_blocks_x, axis=1)]
 
-            #J        = np.zeros(self.full_res)
-            #J[self.Hx, self.Hy] = full_J 
-            #subs2 = [np.array_split(sub, self.num_blocks_y, axis=1) for sub in np.array_split(J, self.num_blocks_x, axis=0)]
+            J        = np.zeros(self.full_res)
+            J[self.Hx, self.Hy] = full_J 
+            subs2 = [np.array_split(sub, self.num_blocks_y, axis=1) for sub in np.array_split(J, self.num_blocks_x, axis=0)]
 
-            #J_ = np.zeros((2, self.num_blocks_x, self.num_blocks_y))
-            #J  = np.zeros((   self.num_blocks_x, self.num_blocks_y))
-
-            nx, ny         = (np.ceil(np.array(self.full_res) / np.array([self.num_blocks_x, self.num_blocks_y])) \
-                                                             *  np.array([self.num_blocks_x, self.num_blocks_y])).astype(int)
-            #end_x, end_y   = np.array(self.full_res) - np.array([nx, ny])
-            x_size, y_size = int(nx / self.num_blocks_x), int(ny / self.num_blocks_y)
-
-            J_ = np.zeros((2, nx, ny))
-            J  = np.zeros((   nx, ny))
-            #J_[:], J[:] = np.nan, np.nan
-
-            J_[:, self.Hx, self.Hy] = dJ 
-            J [   self.Hx, self.Hy] = full_J
-
-            J_ = J_.reshape(2, self.num_blocks_x, x_size, self.num_blocks_y, y_size)
-            J  =  J.reshape(   self.num_blocks_x, x_size, self.num_blocks_y, y_size)
-            J_ = np.sum(J_, axis=(2,4))
-            J  = np.sum(J,  axis=(1,3))
-
-            #for i in range(self.num_blocks_x):
-            #    for j in range(self.num_blocks_y):
-            #        J_[:, i,j] = np.nansum(subs1[i][j], axis=(1,2))
-            #        J [   i,j] = np.nansum(subs2[i][j], axis=(0,1))
+            J_ = np.zeros((2, self.num_blocks_x, self.num_blocks_y))
+            J  = np.zeros((   self.num_blocks_x, self.num_blocks_y))            
+            for i in range(self.num_blocks_x):
+                for j in range(self.num_blocks_y):
+                    J_[:, i,j] = np.nansum(subs1[i][j], axis=(1,2))
+                    J [   i,j] = np.nansum(subs2[i][j], axis=(0,1))
 
             J_[:, ~self._coarse_mask] = 0
             J [   ~self._coarse_mask] = 0
@@ -469,7 +445,7 @@ if __name__ == '__main__':
     Hy       = np.random.choice(10980, 50000)
     full_res = (10980, 10980) 
     aero_res = 600
-    emus_dir = '~/DATA/Multiply/emus/'
+    emus_dir = '/home/ucfafyi/DATA/Multiply/emus/'
     sensor   = 'MSI'
     xap_emu  = glob(emus_dir + '/isotropic_%s_emulators_*xap*.pkl'%(sensor))[0]     
     xbp_emu  = glob(emus_dir + '/isotropic_%s_emulators_*xbp*.pkl'%(sensor))[0]

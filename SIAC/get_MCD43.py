@@ -2,108 +2,24 @@ import os
 import time
 import gdal
 import getpass
+import logging
 import requests
 import numpy as np
 from glob import glob
-from six.moves import input
 from functools import partial
 from multiprocessing import Pool
 from datetime import datetime, timedelta
+from SIAC.modis_tile_cal import get_vector_hv, get_raster_hv
 from os.path import expanduser
 from SIAC.create_logger import create_logger
-from SIAC.modis_tile_cal import get_vector_hv, get_raster_hv
+from six.moves import input
 
 home = expanduser("~")
 file_path = os.path.dirname(os.path.realpath(__file__))
 logger = create_logger()
-test_url = 'https://e4ftl01.cr.usgs.gov/MOTA/MCD43A1.006/2000.02.24/MCD43A1.A2000055.h32v08.006.2016101152216.hdf.xml'
 
-def get_auth(logger):
-    try:
-        auth = tuple([os.environ['Earthdata_user'], os.environ['Earthdata_pass']])
-        with requests.Session() as s:                                            
-            s.auth = auth                                                        
-            r1     = s.get(test_url)                                             
-            r      = s.get(r1.url, stream=True, headers={'user-agent': 'My app'}) 
-        if r.status_code == 401:
-            logger.error('Wrong username and password are set for Earthdata_user and Earthdata_pass Environment variables.') 
-        else:
-            with open(file_path + '/data/.earthdata_auth', 'wb') as f:
-                for i in auth:               
-                    f.write((i + '\n').encode())
-    except:
-        #logger.error('Environment variables Earthdata_user and Earthdata_pass for accessing NASA Earthdata are not set, and trying to read from file or input.')
-        pass
-    if os.path.exists(file_path + '/data/.earthdata_auth'):
-        try:
-            username, password = np.loadtxt(file_path + '/data/.earthdata_auth', dtype=str)
-            auth = tuple([username, password])
-            with requests.Session() as s:
-                s.auth = auth
-                r1     = s.get(test_url)
-                r      = s.get(r1.url, stream=True, headers={'user-agent': 'My app'}) 
-            while r.status_code == 401:                 
-                logger.error('Wrong username and password stored, please enter again')
-                username = input('Username for NASA Earthdata: ')      
-                password = getpass.getpass('Password for NASA Earthdata: ')
-                auth = tuple([username, password])
-                with requests.Session() as s:
-                    s.auth = auth
-                    r1     = s.get(test_url)
-                    r      = s.get(r1.url, stream=True, headers={'user-agent': 'My app'}) 
-                
-            os.remove(file_path + '/data/.earthdata_auth')    
-            with open(file_path + '/data/.earthdata_auth', 'wb') as f:
-                for i in auth:                                 
-                    f.write((i + '\n').encode())              
-            auth = tuple([username, password])
-
-        except:
-            logger.error('Please provide NASA Earthdata username and password for downloading MCD43 data, which can be applied here: https://urs.earthdata.nasa.gov.')
-            username = input('Username for NASA Earthdata: ')
-            password = getpass.getpass('Password for NASA Earthdata: ')
-            auth = username, password                              
-            with requests.Session() as s:
-                s.auth = auth
-                r1     = s.get(test_url)
-                r      = s.get(r1.url, stream=True, headers={'user-agent': 'My app'}) 
-            while r.status_code == 401:                 
-                logger.error('Wrong username and password typed, please enter again')
-                username = input('Username for NASA Earthdata: ')      
-                password = getpass.getpass('Password for NASA Earthdata: ')
-                auth = tuple([username, password])
-                with requests.Session() as s:
-                    s.auth = auth
-                    r1     = s.get(test_url)
-                    r      = s.get(r1.url, stream=True, headers={'user-agent': 'My app'}) 
-            os.remove(file_path + '/data/.earthdata_auth')
-            with open(file_path + '/data/.earthdata_auth', 'wb') as f:     
-                for i in auth:                                     
-                    f.write((i + '\n').encode())
-            auth = tuple([username, password])
-    else:
-        username = input('Username for NASA Earthdata: ')
-        password = getpass.getpass('Password for NASA Earthdata: ')
-        auth = username, password
-        with requests.Session() as s:
-            s.auth = auth
-            r1     = s.get(test_url)
-            r      = s.get(r1.url, stream=True, headers={'user-agent': 'My app'}) 
-        while r.status_code == 401:                 
-            logger.error('Wrong username and password typed, please enter again')
-            username = input('Username for NASA Earthdata: ')      
-            password = getpass.getpass('Password for NASA Earthdata: ')
-            auth = tuple([username, password])
-            with requests.Session() as s:
-                s.auth = auth
-                r1     = s.get(test_url)
-                r      = s.get(r1.url, stream=True, headers={'user-agent': 'My app'}) 
-        with open(file_path + '/data/.earthdata_auth', 'wb') as f:
-            for i in auth: 
-                f.write((i + '\n').encode())
-        auth = tuple([username, password])
-    return auth
-
+#print(file_path + '/data/.earthdata_auth')
+#print(auth)
 
 
 def find_local_files(aoi, obs_time, temporal_window = 16):
@@ -136,7 +52,7 @@ def find_files(aoi, obs_time, temporal_window = 16):
         except:
             raise IOError('AOI has to be raster or vector object/files.')
     fls = zip(np.repeat(tiles, len(days)), np.tile(days, len(tiles)))
-    p = Pool(8)
+    p = Pool(18)
     ret = p.map(get_one_tile, fls)
     p.close()
     p.join()
@@ -156,9 +72,31 @@ def get_one_tile(tile_date):
             time.sleep(1)
     return base + date + '/' + fname[0]
 
-def downloader(url_fname, auth):
+
+def downloader(url_fname):
+    if os.path.exists(file_path + '/data/.earthdata_auth'):
+        try:
+            username, password = np.loadtxt(file_path + '/data/.earthdata_auth', dtype=str)
+            auth = tuple([username, password])
+        except:
+            logger.error('Please provide NASA Earthdata username and password for downloading MCD43 data, which can be applied here: https://urs.earthdata.nasa.gov.')
+            username = input('Username for NASA Earthdata: ')
+            password = getpass.getpass('Password for NASA Earthdata: ')
+            up = username, password
+            os.remove(file_path + '/data/.earthdata_auth')
+            with open(file_path + '/data/.earthdata_auth', 'wb') as f:
+                for i in up:
+                    f.write((i + '\n').encode())
+            auth = tuple([username, password])
+    else:
+        username = input('Username for NASA Earthdata: ')
+        password = getpass.getpass('Password for NASA Earthdata: ')
+        up = username, password
+        with open(home + '/.earthdata_auth', 'wb') as f:
+            for i in up:
+                f.write((i + '\n').encode())
+        auth = tuple([username, password])
     url, fname = url_fname
-    fname = os.path.abspath(fname)
     with requests.Session() as s:
         s.max_redirects = 100000
         s.auth = auth
@@ -193,7 +131,6 @@ def daily_vrt(fnames_date, vrt_dir = None):
 
     fnames, date = fnames_date
     fnames = map(os.path.abspath, fnames)
-    #fnames = list(map(os.path.abspath, fnames))
 
     all_files = []
     for fname in fnames:
@@ -235,10 +172,7 @@ def get_local_MCD43(aoi, obs_time, mcd43_dir ='./MCD43/', vrt_dir ='./MCD43_VRT/
         daily_vrt(fname_date, vrt_dir)
 
 
-def get_mcd43(aoi, obs_time, mcd43_dir = './MCD43/', vrt_dir = './MCD43_VRT/', log_file = None):
-    mcd43_dir = os.path.expanduser(mcd43_dir) # incase ~ used
-    vrt_dir   = os.path.expanduser(vrt_dir)
-    logger = create_logger(log_file)
+def get_mcd43(aoi, obs_time, mcd43_dir = './MCD43/', vrt_dir = './MCD43_VRT/'):
     logger.propagate = False
     logger.info('Start downloading MCD43 for the AOI, this may take some time.')
     logger.info('Query files...')
@@ -246,9 +180,7 @@ def get_mcd43(aoi, obs_time, mcd43_dir = './MCD43/', vrt_dir = './MCD43_VRT/', l
     url_fnames = [[i, mcd43_dir + '/' + i.split('/')[-1]] for i in ret]
     p = Pool(5)
     logger.info('Start downloading...')
-    auth = get_auth(logger)
-    par = partial(downloader, auth = auth)
-    ret = p.map(par, url_fnames)
+    ret = p.map(downloader, url_fnames)
     p.close()
     p.join()
     flist = np.array(url_fnames)[:,1]
@@ -261,14 +193,10 @@ def get_mcd43(aoi, obs_time, mcd43_dir = './MCD43/', vrt_dir = './MCD43_VRT/', l
     p.map(par, fnames_dates)
     p.close()
     p.join()
-    handlers = logger.handlers[:]
-    for handler in handlers:
-        handler.close()
-        logger.removeHandler(handler)
 
 
 if __name__ == '__main__':
-    aoi = '~/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/AOI.json'
-    aoi = '~/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/aot.tif'
+    aoi = '/home/ucfafyi/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/AOI.json'
+    aoi = '/home/ucfafyi/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/aot.tif'
     obs_time = datetime(2017, 7, 8, 10, 8, 20)
-    ret = get_mcd43(aoi, obs_time, mcd43_dir = '~/hep/MCD43/', vrt_dir = '~/DATA/Multiply/MCD43/')
+    ret = get_mcd43(aoi, obs_time, mcd43_dir = '/home/ucfafyi/hep/MCD43/', vrt_dir = '/home/ucfafyi/DATA/Multiply/MCD43/')

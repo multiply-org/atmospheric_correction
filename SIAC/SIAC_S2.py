@@ -1,24 +1,30 @@
-import os
-import sys
 import argparse
+import os
 import requests
-import warnings
-warnings.filterwarnings("ignore")
 import numpy as np
 from glob import glob
 from SIAC.get_MCD43 import get_mcd43, get_local_MCD43
 from datetime import datetime
 from SIAC.the_aerosol import solve_aerosol
-from SIAC.create_logger import create_logger
 from SIAC.the_correction import atmospheric_correction
 from SIAC.s2_preprocessing import s2_pre_processing
 from SIAC.downloaders import downloader
 from SIAC.multi_process import parmap
+from SIAC.create_logger import create_logger
 from os.path import expanduser
 home = expanduser("~")
 file_path = os.path.dirname(os.path.realpath(__file__))
 
 logger = create_logger()
+
+command_2 = ['python', '/home/tonio-bc/projects/multiply/atmospheric_correction/SIAC/SIAC_S2.py',
+           '-f', '/home/tonio-bc/EOData/m1/s2/2017-06-01/30/S/WJ/2017/6/5/0/', '-m', '/home/tonio-bc/EOData/m1/modis/2017-06-01'
+           '-e', '/home/tonio-bc/EOData/m1/emulators', '-c', '/home/tonio-bc/EOData/m1/cams/2017-06-01',
+           '-d', '/home/tonio-bc/EOData/dems/aster_dem.vrt', '-o', 'False',
+           '-a', "'POLYGON((-2.20397502663252 39.09868106889479,-2.1142106223355313 39.09868106889479,"
+                 "-2.1142106223355313 38.94504502508093,-2.20397502663252 38.94504502508093,"
+                 "-2.20397502663252 39.09868106889479))'"]
+
 
 
 def _ensure_dir_format(dir: str):
@@ -79,22 +85,10 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
                 obs_time = datetime.strptime(sensing_time, u'%Y-%m-%dT%H:%M:%S.%fZ')
             if 'TILE_ID' in i:
                 sat = i.split('</')[0].split('>')[-1].split('_')[0]
-                tile = i.split('</')[0].split('>')[-1]
-    log_file = os.path.dirname(metafile) + '/SIAC_S2.log'
-    logger = create_logger(log_file)
-    logger.info('Starting atmospheric corretion for %s' % tile)
-    if not np.all(cloud_mask):
-        handlers = logger.handlers[:]
-        for handler in handlers:
-            handler.close()
-            logger.removeHandler(handler)
-        if download_mcd_43:
-            get_mcd43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir, log_file=log_file)
-        else:
-            get_local_MCD43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
-                    # logger = create_logger(log_file)
+    if download_mcd_43:
+        get_mcd43(toa_refs[0], obs_time, mcd43_dir = mcd43, vrt_dir = vrt_dir)
     else:
-        logger.info('No clean pixel in this scene and no MCD43 is downloaded.')
+        get_local_MCD43(toa_refs[0], obs_time, mcd43_dir=mcd43, vrt_dir=vrt_dir)
     sensor_sat = 'MSI', sat
     band_index  = [1,2,3,7,11,12]
     band_wv    = [469, 555, 645, 859, 1640, 2130]
@@ -104,7 +98,7 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
     aero = solve_aerosol(sensor_sat,toa_bands,band_wv, band_index,view_angles,\
                          sun_angles,obs_time,cloud_mask, gamma=10., spec_m_dir= \
                          file_path+'/spectral_mapping/', emus_dir=emus_dir, mcd43_dir=vrt_dir, aoi=aoi,
-                         global_dem=dem_vrt, cams_dir=cams_dir, log_file = log_file)
+                         global_dem=dem_vrt, cams_dir=cams_dir)
     aero._solving()
     toa_bands  = toa_refs
     view_angles = view_ang_names
@@ -120,10 +114,9 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
                                   sun_angles, aot = aot, cloud_mask = cloud_mask,\
                                   tcwv = tcwv, tco3 = tco3, aot_unc = aot_unc, \
                                   tcwv_unc = tcwv_unc, tco3_unc = tco3_unc, rgb = \
-                                  rgb, emus_dir=emus_dir, global_dem=dem_vrt, cams_dir=cams_dir, log_file = log_file)
+                                  rgb, emus_dir=emus_dir, global_dem=dem_vrt, cams_dir=cams_dir)
     atmo._doing_correction()
     return aero, atmo
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Sentinel 2 Atmospheric Correction Excutable')
     parser.add_argument('-f', "--file_path",      help='Sentinel 2 file path in the form of AWS', required=True)
