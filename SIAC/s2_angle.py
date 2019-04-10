@@ -288,18 +288,18 @@ def resample_s2_angles(metafile):
     src_files      = view_ang_names[ret][abs(np.arange(13)[inv_ret][...,None] - np.arange(13)[ret]).argmin(axis=1)]
     for i in range(len(bad_angs)):
         copyfile(src_files[i], bad_angs[i])
-    par = partial(get_angle, vaa=vaa, vza=vza, band_dict=band_dict)
-    p = Pool(procs)
-    ret = p.map(par,  view_ang_name_gmls)
+    #par = partial(get_angle, vaa=vaa, vza=vza, band_dict=band_dict)
+    #p = Pool(procs)
+    #ret = p.map(par,  view_ang_name_gmls)
     #ret  =list( map(par,  view_ang_name_gmls))
-    p.close()
-    p.join()
-    ret = np.array(ret)
-    if ret.sum()>0:
-        bad_angs       = view_ang_names[~ret]
-        src_files      = view_ang_names[ret][abs(np.arange(13)[~ret][...,None] - np.arange(13)[ret]).argmin(axis=1)]
-        for i in range(len(bad_angs)):
-            copyfile(src_files[i], bad_angs[i])
-    else:
-        raise LookupError('failed to reconstract angles...')
+    #p.close()
+    #p.join()
+    #ret = np.array(ret)
+    #if ret.sum()>0:
+    #    bad_angs       = view_ang_names[~ret]
+    #    src_files      = view_ang_names[ret][abs(np.arange(13)[~ret][...,None] - np.arange(13)[ret]).argmin(axis=1)]
+    #    for i in range(len(bad_angs)):
+    #        copyfile(src_files[i], bad_angs[i])
+    #else:
+    #    raise LookupError('failed to reconstract angles...')
     return sun_ang_name, view_ang_names, toa_refs, cloud_name
