@@ -326,8 +326,10 @@ class atmospheric_correction(object):
 
     def _fill_nan(self,):
         def fill_nan(array):                        
-            x_shp, y_shp = array.shape                     
-            mask  = ~np.isnan(array)                       
+            x_shp, y_shp = array.shape
+            mask  = ~np.isnan(array)
+            if np.sum(mask) == 0: # all data is invalid
+                return np.full((x_shp, y_shp), np.nan)
             valid = np.array(np.where(mask)).T             
             value = array[mask]                            
             mesh  = np.repeat(range(x_shp), y_shp).reshape(x_shp, y_shp), \
