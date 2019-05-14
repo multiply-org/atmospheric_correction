@@ -1,9 +1,6 @@
 include setup.py
-include SIAC/VERSION
 include SIAC/util/*
 include SIAC/data/sen2cloud_detector.pkl
 include SIAC/data/.earthdata_auth
 include SIAC/spectral_mapping/*
 include SIAC/tests/*.py
-include SIAC/tests/aoi.geojson
-include SIAC/tests/s2_flists.txt

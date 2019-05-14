@@ -31,19 +31,21 @@ To save your time for installing GDAL and lightgbm, please use:
 conda install -c conda-forge gdal=2.2.4
 conda install -c conda-forge lightgbm
 ```
+<br>
+The typical usage for **Sentinel 2**:
 
-
-
-The typical usage for Sentinel 2 and Landsat 8:
 ```python
 from SIAC import SIAC_S2
-SIAC_S2('/directory/where/you/store/S2/data/') # this can be either from AWS or Senitinel offical package
+SIAC_S2('/directory/where/you/store/S2/data/') # AWS or Senitinel offical package
 ```
+<br>
+and  **Landsat 8**:
+
 ```python
-from SIAC import SIAC_L8                                                                           
+from SIAC import SIAC_L8
 SIAC_L8('/directory/where/you/store/L8/data/') 
 ``` 
-
+<br>
 An example of correction for Landsat 5 for a more detailed demostration of the usage is shown [here](https://github.com/MarcYin/Global-analysis-ready-dataset)
 
 ## Examples and Map:

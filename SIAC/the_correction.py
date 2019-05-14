@@ -1,6 +1,8 @@
 #!/usr/bin/env python 
 import os
-import sys
+import sys                                                                                                                                  
+import ogr
+import gdal
 import psutil
 import logging
 import warnings
@@ -12,13 +14,12 @@ try:
     import cPickle as pkl
 except:
     import pickle as pkl
-from osgeo import gdal, ogr
+#from osgeo import gdal
 from numpy import clip, uint8
 from SIAC.multi_process import parmap
 from scipy.interpolate import griddata
 from scipy.ndimage import binary_dilation
 from SIAC.create_logger import create_logger
-from SIAC.raster_boundary import get_boundary
 from SIAC.reproject import reproject_data, array_to_raster
 
 warnings.filterwarnings("ignore")
@@ -43,7 +44,6 @@ class atmospheric_correction(object):
                  tco3_unc    = None,
                  cloud_mask  = None,
                  obs_time    = None,
-                 log_file    = None,
                  a_z_order   = 1,
                  ref_scale   = 0.0001,
                  ref_off     = 0,
@@ -52,6 +52,8 @@ class atmospheric_correction(object):
                  atmo_scale  = [1., 1., 1., 1., 1., 1.],
                  global_dem  = '/vsicurl/http://www2.geog.ucl.ac.uk/~ucfafyi/eles/global_dem.vrt',
                  cams_dir    = '/vsicurl/http://www2.geog.ucl.ac.uk/~ucfafyi/cams/',
+                 #global_dem  = '/home/ucfafyi/DATA/Multiply/eles/global_dem.vrt',
+                 #cams_dir    = '/home/ucfafyi/netapp_10/cams/',
                  emus_dir    = 'SIAC/emus/',
                  cams_scale  = [1., 0.1, 46.698, 1., 1., 1.],
                  block_size  = 600,
@@ -94,23 +96,30 @@ class atmospheric_correction(object):
         if (r is not None) & (g is not None) & (b is not None):
             self.ri, self.gi, self.bi = self.toa_bands.index(r), self.toa_bands.index(g), self.toa_bands.index(b)
             self._do_rgb = True
-
-        self.logger = create_logger(log_file)
+        '''   
+        # create logger
+        self.logger = logging.getLogger('SIAC')
+        self.logger.setLevel(logging.INFO)
+        if not self.logger.handlers:
+            ch = logging.StreamHandler()
+            ch.setLevel(logging.DEBUG)
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            ch.setFormatter(formatter)
+            self.logger.addHandler(ch)
+        '''
+        self.logger = create_logger()
          
     def _create_base_map(self,):
         '''
         Deal with different types way to define the AOI, if none is specified, then the image bound is used.
         '''
-        gdal.UseExceptions()
         ogr.UseExceptions() 
+        gdal.UseExceptions()
         if self.aoi is not None:
             if os.path.exists(self.aoi):
                 try:     
                     g = gdal.Open(self.aoi)
-                    #subprocess.call(['gdaltindex', '-f', 'GeoJSON',  '-t_srs', 'EPSG:4326', self.toa_dir + '/AOI.json', self.aoi])
-                    geojson = get_boundary(self.aoi)[0]
-                    with open(self.toa_dir + '/AOI.json', 'wb') as f:
-                        f.write(geojson.encode())
+                    subprocess.call(['gdaltindex', '-f', 'GeoJSON', self.toa_dir + '/AOI.json', self.aoi])
                 except:  
                     try: 
                         gr = ogr.Open(self.aoi)
@@ -139,22 +148,7 @@ class atmospheric_correction(object):
         ogr.DontUseExceptions() 
         gdal.DontUseExceptions()
         if not os.path.exists(self.toa_dir + '/AOI.json'):
-            #g = gdal.Open(self.toa_bands[0])
-            #proj = g.GetProjection()
-            #if 'WGS 84' in proj:
-            #    subprocess.call(['gdaltindex', '-f', 'GeoJSON', self.toa_dir +'/AOI.json', self.toa_bands[0]])
-            #else:
-            #    subprocess.call(['gdaltindex', '-f', 'GeoJSON', '-t_srs', 'EPSG:4326', self.toa_dir +'/AOI.json', self.toa_bands[0]])
-            if 'WGS 84' in proj:                                           
-                #subprocess.call(['gdaltindex', '-f', 'GeoJSON', self.toa_dir +'/AOI.json', self.toa_bands[0]])
-                geojson = get_boundary(self.toa_bands[0], to_wgs84 = False)                                                                                             
-                with open(self.toa_dir + '/AOI.json', 'wb') as f:          
-                    f.write(geojson.encode())                              
-            else:                                                          
-                #subprocess.call(['gdaltindex', '-f', 'GeoJSON', '-t_srs', 'EPSG:4326', self.toa_dir +'/AOI.json', self.toa_bands[0]])
-                geojson = get_boundary(self.toa_bands[0])[0]               
-                with open(self.toa_dir + '/AOI.json', 'wb') as f:          
-                    f.write(geojson.encode()) 
+            subprocess.call(['gdaltindex', '-f', 'GeoJSON', self.toa_dir +'/AOI.json', self.toa_bands[0]])
             self.logger.warning('AOI is not created and full band extend is used')
             self.aoi = self.toa_dir + '/AOI.json'
         else:
@@ -229,20 +223,11 @@ class atmospheric_correction(object):
         _sun_angles = [] 
         _view_angles = []
         for fname in self._sun_angles:     
-            #nodatas = [float(i.split("=")[1]) for i in gdal.Info(fname).split('\n') if' NoData' in i] 
-            try:
-                nodatas = ' '.join([i.split("=")[1] for i in gdal.Info(fname).split('\n') if' NoData' in i])
-            except:
-                nodatas = None
-            ang = reproject_data(fname, self.mg, srcNodata = nodatas, resample = \
+            ang = reproject_data(fname, self.mg, srcNodata = None, resample = \
                                  0, dstNodata=np.nan, outputType= gdal.GDT_Float32).data
             _sun_angles.append(ang)        
         for fname in self._view_angles:    
-            try:                           
-                nodatas = ' '.join([i.split("=")[1] for i in gdal.Info(fname).split('\n') if' NoData' in i])
-            except:                        
-                nodatas = None 
-            ang = reproject_data(fname, self.mg, srcNodata = nodatas, resample = \
+            ang = reproject_data(fname, self.mg, srcNodata = None, resample = \
                                  0, dstNodata=np.nan, outputType= gdal.GDT_Float32).data
             _view_angles.append(ang)       
         _view_angles = np.array(_view_angles)
@@ -326,8 +311,10 @@ class atmospheric_correction(object):
 
     def _fill_nan(self,):
         def fill_nan(array):                        
-            x_shp, y_shp = array.shape                     
-            mask  = ~np.isnan(array)                       
+            x_shp, y_shp = array.shape
+            mask  = ~np.isnan(array)
+            if np.sum(mask) == 0: # all data is invalid
+                return np.full((x_shp, y_shp), np.nan)
             valid = np.array(np.where(mask)).T             
             value = array[mask]                            
             mesh  = np.repeat(range(x_shp), y_shp).reshape(x_shp, y_shp), \
@@ -530,19 +517,19 @@ class atmospheric_correction(object):
         projection   = self._toa_bands[self.ri].GetProjectionRef()
         geotransform = self._toa_bands[self.ri].GetGeoTransform() 
         self._save_rgb(rgba_array, name, projection, geotransform)
-        gdal.Translate(self.toa_dir +'/TOA_overview.png', self.toa_dir+'/TOA_RGB.tif', \
-                       format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
-        gdal.Translate(self.toa_dir +'/TOA_ovr.png', self.toa_dir+'/TOA_RGB.tif', \
-                       format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir +'/TOA_overview.png', self.toa_dir+'/TOA_RGB.tif', \
+        #                format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir +'/TOA_ovr.png', self.toa_dir+'/TOA_RGB.tif', \
+        #                format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
 
         rgba_array = np.clip([self.boa_rgb[0] * self.rgb_scale * 255, self.boa_rgb[1] * self.rgb_scale * 255, \
                               self.boa_rgb[2] * self.rgb_scale * 255, alpha * self.rgb_scale * 255], 0, 255).astype(np.uint8)
         name = self.toa_dir + '/BOA_RGB.tif'
         self._save_rgb(rgba_array, name, projection, geotransform)
-        gdal.Translate(self.toa_dir+'/BOA_overview.png', self.toa_dir+'/BOA_RGB.tif', \
-                       format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
-        gdal.Translate(self.toa_dir+'/BOA_ovr.png', self.toa_dir+'/BOA_RGB.tif', \
-                       format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir+'/BOA_overview.png', self.toa_dir+'/BOA_RGB.tif', \
+        #                format = 'PNG', widthPct=25, heightPct=25, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
+        # gdal.Translate(self.toa_dir+'/BOA_ovr.png', self.toa_dir+'/BOA_RGB.tif', \
+        #                format = 'PNG', widthPct=10, heightPct=10, resampleAlg=gdal.GRA_Bilinear ).FlushCache()
 
     def _doing_correction(self,):
         self.logger.propagate = False
@@ -568,10 +555,6 @@ class atmospheric_correction(object):
             self.logger.info('Composing RGB.')
             self._compose_rgb()
         self.logger.info('Done.')
-        handlers = self.logger.handlers[:]
-        for handler in handlers:
-            handler.close()
-            self.logger.removeHandler(handler)
         return ret
          
 def test_s2():
@@ -604,7 +587,7 @@ def test_s2():
     return ret, atmo
 def test_l8():
     sensor_sat = 'OLI', 'L8'
-    base = '~/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/LC08_L1TP_014034_20170831_20170915_01_T1_'                             
+    base = '/home/ucfafyi/DATA/S2_MODIS/l_data/LC08_L1TP_014034_20170831_20170915_01_T1/LC08_L1TP_014034_20170831_20170915_01_T1_'                             
     toa_bands  = [base + i + '.TIF' for i in ['B2', 'B3', 'B4', 'B5', 'B6', 'B7']]
     view_angles = [base + 'sensor_%s'%i +'.tif'  for i in ['B02', 'B03', 'B04', 'B05', 'B06', 'B07']]
     sun_angles = base + 'solar_B01.tif'
@@ -675,7 +658,7 @@ def test_modis():
     aot_unc = toa_dir + '/aot_unc.tif'
     tcwv_unc = toa_dir + '/tcwv_unc.tif'
     tco3_unc = toa_dir + '/tco3_unc.tif'
-    emus_dir   = '~/DATA/Multiply/emus/old_emus/'
+    emus_dir   = '/data/store01/data_dirs/students/ucfafyi/Multiply/emus/old_emus/'
     rgb = [toa_bands[2], toa_bands[1], toa_bands[0]]
     atmo = atmospheric_correction(sensor_sat, toa_bands, band_index,view_angles,sun_angles, aot = aot, cloud_mask = cloud_mask, ref_scale = scale, ref_off = off,\
                                   tcwv = tcwv, tco3 = tco3, aot_unc = aot_unc, tcwv_unc = tcwv_unc, tco3_unc = tco3_unc, rgb = rgb, emus_dir =emus_dir,block_size=3000)
@@ -686,4 +669,10 @@ if __name__ == '__main__':
     s_ret, s_atmo = test_s2()
     #l_ret, l_atmo = test_l8()
     #m_ret, m_atmo = test_modis()
+
+
+
+
+
+
 
