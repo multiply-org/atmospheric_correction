@@ -46,7 +46,7 @@ def do_cloud(cloud_bands, cloud_name = None):
         return cloud_mask
 
 
-def s2_pre_processing(s2_dir):
+def s2_pre_processing(s2_dir, component_progress_logger):
     s2_dir = os.path.abspath(s2_dir)
     scihub = []
     aws    = []
@@ -59,7 +59,8 @@ def s2_pre_processing(s2_dir):
                 if 'metadata.xml' in j:
                     aws.append(j)
     s2_tiles = []
-    for metafile in scihub + aws:
+    for i, metafile in enumerate(scihub + aws):
+        component_progress_logger.info(f'{int((i / len(rets)) * 50)}')
         with open(metafile) as f:
             for i in f.readlines(): 
                 if 'TILE_ID' in i:

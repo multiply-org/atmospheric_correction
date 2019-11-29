@@ -18,6 +18,8 @@ from os.path import expanduser
 home = expanduser("~")
 file_path = os.path.dirname(os.path.realpath(__file__))
 
+component_progress_logger = logging.getLogger('ComponentProgress')
+component_progress_logger.setLevel(logging.INFO)
 logger = create_logger()
 
 
@@ -49,9 +51,10 @@ def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/'
         f = lambda fname_url: downloader(fname_url[0], fname_url[1], emu_dir)
         parmap(f, to_down)
     download_mcd43 = download_mcd43 == 'True'
-    rets = s2_pre_processing(s2_t)
+    rets = s2_pre_processing(s2_t, component_progress_logger)
     aero_atmos = []
-    for ret in rets:
+    for i, ret in enumerate(rets):
+        logger.info(f'{50 + int((i / len(rets)) * 50)}')
         ret += (dem_vrt, cams_dir, emu_dir, mcd43, vrt_dir, download_mcd43, aoi)
         #sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile = ret
         aero_atmo = do_correction(*ret)
