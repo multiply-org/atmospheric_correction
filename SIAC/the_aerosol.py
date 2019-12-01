@@ -24,7 +24,7 @@ from SIAC.multi_process import parmap
 from scipy.interpolate import griddata
 from datetime import datetime, timedelta
 from SIAC.psf_optimize import psf_optimize
-from SIAC.create_logger import create_logger
+from SIAC.create_logger import create_logger, create_component_progress_logger
 from SIAC.raster_boundary import get_boundary
 from SIAC.atmo_solver import solving_atmo_paras
 from sklearn.linear_model import HuberRegressor 
@@ -107,6 +107,7 @@ class solve_aerosol(object):
         self.spec_slope  = spec_map[0]
         self.spec_off    = spec_map[1]
         self.logger      = create_logger(self.log_file)
+        self.component_progress_logger = create_component_progress_logger()
 
     def _create_base_map(self,):
         '''
@@ -666,7 +667,7 @@ class solve_aerosol(object):
         self._aot = self._aot * 1.3 - 0.08
         self._aot = np.maximum(self._aot, 0)
 
-    def _solving(self,):
+    def _solving(self, lower_bound=0, upper_bound=100):
         self.logger.propagate = False
         self.logger.info('Set AOI.')
         self._create_base_map()
@@ -728,7 +729,8 @@ class solve_aerosol(object):
                                                    gamma = self.gamma,
                                                    log_file = self.log_file
                                                    )
-                    ret = self.aero._multi_grid_solver()
+                    ret = self.aero._multi_grid_solver(lower_bound + (0.4 * (upper_bound - lower_bound)), 
+                                                       upper_bound - (0.1 * (upper_bound - lower_bound)))
             else:
                 self.logger.info('No valid value is found for retrieval of atmospheric parameters and priors are stored.')
                 self._read_aux()       
@@ -747,7 +749,7 @@ class solve_aerosol(object):
             ret = np.array([[self._aot, self._tcwv, self._tco3], [self._aot_unc, self._tcwv_unc, self._tco3_unc]])
             self.aero_res /=2
             self.ySize, self.xSize = self._aot.shape
-            
+        self.component_progress_logger.info(f'{int(lower_bound+(0.9*(upper_bound-lower_bound)))}')
         solved     = ret[0].reshape(3, self.ySize, self.xSize)
         unc        = ret[1].reshape(3, self.ySize, self.xSize)
         self.logger.info('Finished retrieval and saving them into local files.')

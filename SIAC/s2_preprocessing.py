@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 import os
 import gc
-import sys
 import gdal
 import logging
 import numpy as np
-from glob import glob
 import multiprocessing
 from SIAC.reproject import reproject_data
 from SIAC.s2_angle import resample_s2_angles
-from SIAC.create_logger import create_logger
+from SIAC.create_logger import create_logger, create_component_progress_logger
 from skimage.morphology import disk, binary_dilation, binary_erosion
 
 
@@ -46,7 +44,7 @@ def do_cloud(cloud_bands, cloud_name = None):
         return cloud_mask
 
 
-def s2_pre_processing(s2_dir, component_progress_logger):
+def s2_pre_processing(s2_dir):
     s2_dir = os.path.abspath(s2_dir)
     scihub = []
     aws    = []
@@ -59,8 +57,10 @@ def s2_pre_processing(s2_dir, component_progress_logger):
                 if 'metadata.xml' in j:
                     aws.append(j)
     s2_tiles = []
-    for i, metafile in enumerate(scihub + aws):
-        component_progress_logger.info(f'{int((i / len(rets)) * 50)}')
+    metadata_files = scihub + aws
+    component_progress_logger = create_component_progress_logger()
+    for i, metafile in enumerate(metadata_files):
+        component_progress_logger.info(f'{int((i / len(metafile)) * 20)}')
         with open(metafile) as f:
             for i in f.readlines(): 
                 if 'TILE_ID' in i:

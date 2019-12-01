@@ -19,3 +19,14 @@ def create_logger(fname = None):
         fh.setFormatter(formatter)    
         logger.addHandler(fh)
     return logger
+
+
+def create_component_progress_logger():
+    component_progress_logger = logging.getLogger('ComponentProgress')
+    component_progress_logger.setLevel(logging.INFO)
+    component_progress_formatter = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
+    component_progress_logging_handler = logging.StreamHandler()
+    component_progress_logging_handler.setLevel(logging.INFO)
+    component_progress_logging_handler.setFormatter(component_progress_formatter)
+    component_progress_logger.addHandler(component_progress_logging_handler)
+    return component_progress_logger

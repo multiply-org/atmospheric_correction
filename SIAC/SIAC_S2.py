@@ -1,5 +1,4 @@
 import os
-import sys
 import argparse
 import requests
 import warnings
@@ -9,7 +8,7 @@ from glob import glob
 from SIAC.get_MCD43 import get_mcd43, get_local_MCD43
 from datetime import datetime
 from SIAC.the_aerosol import solve_aerosol
-from SIAC.create_logger import create_logger
+from SIAC.create_logger import create_logger, create_component_progress_logger
 from SIAC.the_correction import atmospheric_correction
 from SIAC.s2_preprocessing import s2_pre_processing
 from SIAC.downloaders import downloader
@@ -18,8 +17,6 @@ from os.path import expanduser
 home = expanduser("~")
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-component_progress_logger = logging.getLogger('ComponentProgress')
-component_progress_logger.setLevel(logging.INFO)
 logger = create_logger()
 
 
@@ -51,20 +48,24 @@ def SIAC_S2(s2_t, dem_vrt, cams_dir, send_back = False, mcd43 = home + '/MCD43/'
         f = lambda fname_url: downloader(fname_url[0], fname_url[1], emu_dir)
         parmap(f, to_down)
     download_mcd43 = download_mcd43 == 'True'
-    rets = s2_pre_processing(s2_t, component_progress_logger)
+    rets = s2_pre_processing(s2_t)
     aero_atmos = []
+    component_progress_logger = create_component_progress_logger()
     for i, ret in enumerate(rets):
-        logger.info(f'{50 + int((i / len(rets)) * 50)}')
+        lower_bound = 20 + int((i / len(rets)) * 80)
+        upper_bound = 20 + int(((i + 1)/ len(rets)) * 80)
+        component_progress_logger.info(f'{20 + int((i / len(rets)) * 80)}')
         ret += (dem_vrt, cams_dir, emu_dir, mcd43, vrt_dir, download_mcd43, aoi)
         #sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile = ret
-        aero_atmo = do_correction(*ret)
+        aero_atmo = do_correction(*ret, lower_bound, upper_bound)
         if send_back:
             aero_atmos.append(aero_atmo)
     if send_back:
         return aero_atmos
 
 def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask, metafile, dem_vrt, cams_dir,
-                  emus_dir, mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', download_mcd_43 = True, aoi=None):
+                  emus_dir, mcd43 = home + '/MCD43/', vrt_dir = home + '/MCD43_VRT/', download_mcd_43 = True, aoi=None,
+                  lower_bound=0, upper_bound=100):
 
     if os.path.realpath(mcd43) in os.path.realpath(home + '/MCD43/'):
         if not os.path.exists(home + '/MCD43/'):
@@ -108,7 +109,7 @@ def do_correction(sun_ang_name, view_ang_names, toa_refs, cloud_name, cloud_mask
                          sun_angles,obs_time,cloud_mask, gamma=10., spec_m_dir= \
                          file_path+'/spectral_mapping/', emus_dir=emus_dir, mcd43_dir=vrt_dir, aoi=aoi,
                          global_dem=dem_vrt, cams_dir=cams_dir, log_file = log_file)
-    aero._solving()
+    aero._solving(lower_bound, upper_bound)
     toa_bands  = toa_refs
     view_angles = view_ang_names
     aot = base + 'aot.tif'

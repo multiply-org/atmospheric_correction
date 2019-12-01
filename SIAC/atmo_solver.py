@@ -13,6 +13,7 @@ except:
 from scipy import optimize, interpolate, sparse
 from scipy.sparse import linalg
 from SIAC.multi_process import parmap
+from SIAC.create_logger import create_component_progress_logger
 
 class bcolors:
     HEADER = '\033[95m'
@@ -138,8 +139,8 @@ class solving_atmo_paras(object):
         znew   = array[self.resample_hx, self.resample_hy]
         return znew
 
-    def _multi_grid_solver(self,):
-
+    def _multi_grid_solver(self, lower_bound=0, upper_bound=100):
+        component_progress_logger = create_component_progress_logger()
         self.logger.propagate = False
         bx, by  = np.ceil(1. * np.array(self.full_res) * self.pix_res / self.aero_res)
         level_x = math.log(bx, 2)
@@ -161,6 +162,7 @@ class solving_atmo_paras(object):
         self.logger.info('Total %d level of grids are going to be used.'% (len(shapes)))
         #for ii, shape in enumerate(shapes):
         for ii in order:
+            component_progress_logger.info(f'{int(lower_bound+((ii/len(order))*(upper_bound-lower_bound)))}')
             #import pdb; pdb.set_trace()
             shape = shape_dict[ii]
             print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
